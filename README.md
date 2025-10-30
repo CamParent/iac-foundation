@@ -7,15 +7,18 @@ This repository contains modular **Bicep** templates used to deploy a secure and
 ## 📁 Repository Structure
 
 iac-foundation/
-├── main.bicep # Root orchestration template
+├── main.bicep                           # Orchestrator (subscription scope)
 ├── modules/
-│ └── firewall.bicep # Network security module
-├── exports/ # Auto-exported Bicep templates from existing RGs
-│ ├── rg-hub-networking.bicep
-│ ├── rg-shared-services.bicep
-│ └── rg-spoke-app.bicep
-├── envs/ # Environment parameter files (dev, test, prod)
-└── scripts/ # Deployment scripts and automation tools
+│   ├── networking.bicep                 # Hub VNet + subnets (exports distilled)
+│   ├── firewall.bicep                   # Azure Firewall + PIP
+│   └── keyvault.bicep                   # Shared Key Vault/certs (optional to start)
+├── exports/                             # Your auto-exported templates (reference only)
+│   ├── rg-hub-networking.bicep
+│   ├── rg-shared-services.bicep
+│   └── rg-spoke-app.bicep
+├── envs/
+│   └── dev.bicepparam                   # Per-environment values
+└── scripts/
 
 ---
 
