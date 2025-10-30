@@ -1,0 +1,21 @@
+# Build and deployment artifacts
+*.zip
+*.log
+*.tmp
+
+# VS Code settings
+.vscode/
+.history/
+*.code-workspace
+
+# Azure CLI cache
+.azure/
+
+# Node or Python (if used later)
+node_modules/
+__pycache__/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
