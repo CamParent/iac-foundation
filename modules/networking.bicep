@@ -1,58 +1,48 @@
-@description('Region for resources')
+@description('Azure region')
 param location string
-
-@description('Name prefix for resources')
+@description('Name prefix for all resources in this module, e.g. "hub" -> vnet-hub')
 param namePrefix string
+@description('Hub VNet address space, e.g. "10.1.0.0/16"')
+param addressSpace string
+@description('Subnet prefixes for the hub VNet')
+param subnets object
+@description('Optional tags')
+param tags object = {}
 
-@description('Hub VNet address spaces')
-param hubAddressSpace array
+var vnetName  = 'vnet-${namePrefix}'
+var snMgmt    = 'sn-${namePrefix}-mgmt'
+var snWork    = 'sn-${namePrefix}-workloads'
 
-@description('AzureFirewallSubnet prefix')
-param firewallSubnetPrefix string
-
-@description('Workloads subnet prefix')
-param workloadsSubnetPrefix string
-
-@description('Common tags')
-param tags object
-
-// VNet
-resource hubVnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
-  name: '${namePrefix}-hub-vnet'
+resource vnet 'Microsoft.Network/virtualNetworks@2023-09-01' = {
+  name: vnetName
   location: location
   tags: tags
   properties: {
-    addressSpace: {
-      addressPrefixes: hubAddressSpace
-    }
+    addressSpace: { addressPrefixes: [ addressSpace ] }
     subnets: [
-      {
-        name: 'AzureFirewallSubnet'
-        properties: {
-          addressPrefix: firewallSubnetPrefix
-        }
-      }
-      {
-        name: 'workloads'
-        properties: {
-          addressPrefix: workloadsSubnetPrefix
-        }
-      }
+      { name: 'AzureFirewallSubnet', properties: { addressPrefix: subnets.firewall } }
+      { name: snMgmt,                 properties: { addressPrefix: subnets.management } }
+      { name: snWork,                 properties: { addressPrefix: subnets.workloads } }
     ]
   }
 }
 
-// Declare subnets as existing (so you can output their IDs)
-resource afwSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
-  parent: hubVnet
+// declare subnets as existing for clean, stable IDs
+resource firewallSubnet  'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
+  parent: vnet
   name: 'AzureFirewallSubnet'
 }
-
-resource workloadsSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
-  parent: hubVnet
-  name: 'workloads'
+resource managementSubnet 'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
+  parent: vnet
+  name: snMgmt
+}
+resource workloadsSubnet  'Microsoft.Network/virtualNetworks/subnets@2023-09-01' existing = {
+  parent: vnet
+  name: snWork
 }
 
-output hubVnetId string = hubVnet.id
-output firewallSubnetId string = afwSubnet.id
-output workloadsSubnetId string = workloadsSubnet.id
+output vnetId string              = vnet.id
+output firewallSubnetId string    = firewallSubnet.id
+output managementSubnetId string  = managementSubnet.id
+output workloadsSubnetId string   = workloadsSubnet.id
+output vnetName string            = vnet.name

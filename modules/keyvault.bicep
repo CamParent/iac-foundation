@@ -1,38 +1,43 @@
-@description('Region')
+@description('Azure region')
 param location string
 
-@description('Key Vault name')
-param name string
+@description('Name prefix, e.g. "cert-store-615" -> kv-cert-store-615')
+param namePrefix string
 
-@allowed([
-  'standard'
-  'premium'
-])
-param skuName string = 'standard'
+@description('Optional tags')
+param tags object = {}
 
-@description('Common tags')
-param tags object
+@description('Enable RBAC auth for KV (recommended). If false, access policies must be used.')
+param enableRbacAuthorization bool = true
+
+@description('Optional PFX certificate upload (base64). Leave empty to skip.')
+param pfxBase64 string = ''
+
+var kvName = toLower('kv-${namePrefix}')
 
 resource kv 'Microsoft.KeyVault/vaults@2023-07-01' = {
-  name: name
+  name: kvName
   location: location
-  properties: {
-    sku: {
-      name: skuName
-      family: 'A'
-    }
-    tenantId: subscription().tenantId
-    enableRbacAuthorization: true
-    enabledForDeployment: true
-    enabledForTemplateDeployment: true
-    softDeleteRetentionInDays: 7
-    networkAcls: {
-      defaultAction: 'Allow'
-      bypass: 'AzureServices'
-    }
-  }
   tags: tags
+  properties: {
+    tenantId: subscription().tenantId
+    enablePurgeProtection: true
+    enableSoftDelete: true
+    enableRbacAuthorization: enableRbacAuthorization
+    sku: { family: 'A', name: 'standard' }
+    networkAcls: { bypass: 'AzureServices', defaultAction: 'Allow' }
+  }
 }
 
-output keyVaultId string = kv.id
-output keyVaultUri string = kv.properties.vaultUri
+resource pfxSecret 'Microsoft.KeyVault/vaults/secrets@2023-07-01' = if (pfxBase64 != '') {
+  name: 'tls-pfx'
+  parent: kv
+  properties: {
+    value: pfxBase64
+    contentType: 'application/x-pkcs12'
+  }
+}
+
+output keyVaultId string   = kv.id
+output keyVaultName string = kv.name
+output pfxSecretId string  = pfxBase64 != '' ? pfxSecret.id : ''

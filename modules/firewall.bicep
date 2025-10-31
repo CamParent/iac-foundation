@@ -1,53 +1,41 @@
-@description('Region for resources')
+@description('Azure region')
 param location string
-
-@description('Name prefix for resources')
+@description('Name prefix for firewall resources, e.g. "hub" -> fw-hub, pip-fw-hub')
 param namePrefix string
 
-// Remove this param if you’re not using it yet
-// param vnetId string
+@allowed([ 'Standard', 'Premium' ])
+@description('Azure Firewall SKU tier')
+param firewallSku string = 'Standard'
 
-@description('AzureFirewallSubnet resource ID')
+@allowed([ 'Alert', 'Deny', 'AlertAndDeny', 'Off' ])
+@description('Firewall threat intel mode')
+param threatIntelMode string = 'AlertAndDeny'
+
+@description('ID of the AzureFirewallSubnet in the hub VNet')
 param firewallSubnetId string
 
-@allowed([
-  'Standard'
-  'Premium'
-  'Basic'
-])
-param sku string = 'Standard'
+@description('Optional tags')
+param tags object = {}
 
-@allowed([
-  'Alert'
-  'Deny'
-  'Off'
-  'AlertAndDeny'
-])
-param threatIntelMode string = 'Alert'
+var pipName = 'pip-fw-${namePrefix}'
+var fwName  = 'fw-${namePrefix}'
 
-@description('Common tags')
-param tags object
-
-// Public IP (Standard)
 resource pip 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
-  name: 'pip-${namePrefix}-fw'
+  name: pipName
   location: location
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAllocationMethod: 'Static'
-  }
+  sku: { name: 'Standard' }
+  properties: { publicIPAllocationMethod: 'Static' }
   tags: tags
 }
 
-// Azure Firewall (use API version compatible with top-level sku)
-resource firewall 'Microsoft.Network/azureFirewalls@2022-09-01' = {
-  name: '${namePrefix}-fw'
+// API version that supports sku { name: AZFW_VNet, tier: Standard|Premium }
+resource fw 'Microsoft.Network/azureFirewalls@2022-09-01' = {
+  name: fwName
   location: location
+  tags: tags
   sku: {
     name: 'AZFW_VNet'
-    tier: sku     // 'Standard' | 'Premium' | 'Basic'
+    tier: firewallSku
   }
   properties: {
     threatIntelMode: threatIntelMode
@@ -55,18 +43,14 @@ resource firewall 'Microsoft.Network/azureFirewalls@2022-09-01' = {
       {
         name: 'azureFirewallIpConfig'
         properties: {
-          subnet: {
-            id: firewallSubnetId
-          }
-          publicIPAddress: {
-            id: pip.id
-          }
+          subnet:          { id: firewallSubnetId }
+          publicIPAddress: { id: pip.id }
         }
       }
     ]
   }
-  tags: tags
 }
 
-output firewallId string = firewall.id
-output firewallPublicIp string = pip.properties.ipAddress
+output firewallId string        = fw.id
+output firewallPublicIp string  = pip.properties.ipAddress
+output firewallName string      = fw.name
