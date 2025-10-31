@@ -1,44 +1,116 @@
-# IaC Foundation for Azure Infrastructure
+🌐 Azure IaC Foundation — Hub-Spoke Architecture
+Overview
 
-This repository contains modular **Bicep** templates used to deploy a secure and scalable Azure environment.
+This repository defines a modular, production-ready Azure environment using Bicep for Infrastructure-as-Code.
+It follows the hub-and-spoke network model, incorporating centralized security, shared services, and application isolation.
 
----
+Architecture
 
-## 📁 Repository Structure
+Core components:
 
-iac-foundation/
-├── main.bicep                           # Orchestrator (subscription scope)
-├── modules/
-│   ├── networking.bicep                 # Hub VNet + subnets (exports distilled)
-│   ├── firewall.bicep                   # Azure Firewall + PIP
-│   └── keyvault.bicep                   # Shared Key Vault/certs (optional to start)
-├── exports/                             # Your auto-exported templates (reference only)
-│   ├── rg-hub-networking.bicep
-│   ├── rg-shared-services.bicep
-│   └── rg-spoke-app.bicep
-├── envs/
-│   └── dev.bicepparam                   # Per-environment values
-└── scripts/
+Hub Network (rg-hub-networking)
 
----
+Central virtual network hosting shared infrastructure
 
-## 🚀 Getting Started
+Subnets: AzureFirewallSubnet, sn-hub-mgmt, sn-hub-workloads
 
-### Prerequisites
-- [Azure CLI](https://learn.microsoft.com/cli/azure/install-azure-cli)
-- [Bicep CLI](https://learn.microsoft.com/azure/azure-resource-manager/bicep/install)
-- [Visual Studio Code](https://code.visualstudio.com/)
-- [Git](https://git-scm.com/)
+Azure Firewall (Standard/Premium SKU)
 
-### Login and Select Subscription
-```bash
-az login --tenant 8b36a591-80dc-44e6-aefc-29e07f135ebd
-az account set --subscription 95f5b230-2ac0-46e4-9e78-213a57b19bda
-```
+Spoke Network (rg-spoke-app)
 
----
+Application virtual network with dedicated subnet for workloads
 
-## 🧱 Next Steps
-- Modularize existing Bicep templates.
-- Add parameter files for each environment (dev, test, prod).
-- Implement CI/CD with GitHub Actions for automated deployments.
+Peered bidirectionally with the hub
+
+Shared Services (rg-shared-services)
+
+Azure Key Vault for secure certificate and secret management
+
+Resource Groups
+
+Each layer isolated for clear management and RBAC boundaries
+
+The topology supports future expansion into:
+
+VPN/ExpressRoute gateways
+
+Azure Bastion
+
+Application Gateways and WAF
+
+Private Endpoints and Service Networking
+
+Repository Structure
+
+.
+├── main.bicep # Root orchestration file (subscription scope)
+└── modules/
+├── networking.bicep # Hub VNet and subnets
+├── spoke-networking.bicep # Spoke VNet and subnet
+├── firewall.bicep # Azure Firewall deployment
+├── keyvault.bicep # Shared Key Vault (optional)
+└── peering.bicep # Hub ↔ Spoke VNet peering
+
+Deployment
+Prerequisites
+
+    Azure CLI installed and logged in
+
+az login
+
+Bicep CLI ≥ 0.38.0
+
+    az bicep version
+
+    Sufficient permissions to create:
+
+        Resource Groups
+
+        Networking resources
+
+        Azure Firewall
+
+        Key Vault
+
+Validate configuration
+
+Use what-if to preview deployment impact:
+
+az deployment sub what-if `
+  --location eastus2 `
+  --template-file .\main.bicep `
+  --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
+
+Deploy
+
+az deployment sub create `
+  --location eastus2 `
+  --template-file .\main.bicep `
+  --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
+
+Expected outputs
+
+    Hub and Spoke VNets created and peered
+
+    Azure Firewall deployed with static public IP
+
+    Optional Key Vault provisioned
+
+    Resource groups tagged and consistent
+
+Next Steps
+
+    Integrate with GitHub Actions for CI/CD validation and linting.
+
+    Add Azure Policy for governance and compliance.
+
+    Introduce Application Gateway + WAF for web-tier security.
+
+    Extend to include Azure Monitor and Log Analytics.
+
+Author
+
+Cameron Parent
+Network & Cloud Engineer | Azure Security Engineer | CISSP
+🔗 https://www.linkedin.com/in/camjosephparent/
+• ☁️ Microsoft Azure | Cisco | ISC²
