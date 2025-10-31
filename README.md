@@ -1,46 +1,40 @@
-🌐 Azure IaC Foundation — Hub-Spoke Architecture
-Overview
+# 🌐 Azure IaC Foundation — Hub-Spoke Architecture
 
-This repository defines a modular, production-ready Azure environment using Bicep for Infrastructure-as-Code.
-It follows the hub-and-spoke network model, incorporating centralized security, shared services, and application isolation.
+## Overview
+This repository defines a **modular, production-ready Azure environment** using **Bicep** for Infrastructure-as-Code.  
+It follows the **hub-and-spoke network model**, incorporating centralized security, shared services, and application isolation.
 
-Architecture
+---
 
-Core components:
+## Architecture
 
-Hub Network (rg-hub-networking)
+### Core Components
 
-Central virtual network hosting shared infrastructure
+#### 🏢 Hub Network (`rg-hub-networking`)
+- Central virtual network hosting shared infrastructure  
+- Subnets: `AzureFirewallSubnet`, `sn-hub-mgmt`, `sn-hub-workloads`  
+- Azure Firewall (Standard/Premium SKU)
 
-Subnets: AzureFirewallSubnet, sn-hub-mgmt, sn-hub-workloads
+#### 🌐 Spoke Network (`rg-spoke-app`)
+- Application virtual network with dedicated subnet for workloads  
+- Peered bidirectionally with the hub
 
-Azure Firewall (Standard/Premium SKU)
+#### 🔐 Shared Services (`rg-shared-services`)
+- Azure Key Vault for secure certificate and secret management
 
-Spoke Network (rg-spoke-app)
+#### 🧱 Resource Groups
+- Each layer isolated for clear management and RBAC boundaries
 
-Application virtual network with dedicated subnet for workloads
+### Expandable Topology
+This design supports future expansion into:
+- VPN/ExpressRoute gateways  
+- Azure Bastion  
+- Application Gateway + WAF  
+- Private Endpoints and Service Networking
 
-Peered bidirectionally with the hub
+---
 
-Shared Services (rg-shared-services)
-
-Azure Key Vault for secure certificate and secret management
-
-Resource Groups
-
-Each layer isolated for clear management and RBAC boundaries
-
-The topology supports future expansion into:
-
-VPN/ExpressRoute gateways
-
-Azure Bastion
-
-Application Gateways and WAF
-
-Private Endpoints and Service Networking
-
-Repository Structure
+## Repository Structure
 
 .
 ├── main.bicep # Root orchestration file (subscription scope)
@@ -51,14 +45,17 @@ Repository Structure
 ├── keyvault.bicep # Shared Key Vault (optional)
 └── peering.bicep # Hub ↔ Spoke VNet peering
 
-Deployment
-Prerequisites
 
-    Azure CLI installed and logged in
+---
 
-az login
+## Deployment
 
-Bicep CLI ≥ 0.38.0
+### Prerequisites
+- **Azure CLI** installed and logged in  
+  ```powershell
+  az login
+
+    Bicep CLI ≥ 0.38.0
 
     az bicep version
 
@@ -72,9 +69,9 @@ Bicep CLI ≥ 0.38.0
 
         Key Vault
 
-Validate configuration
+Validate Configuration
 
-Use what-if to preview deployment impact:
+Preview what will be created:
 
 az deployment sub what-if `
   --location eastus2 `
@@ -88,7 +85,7 @@ az deployment sub create `
   --template-file .\main.bicep `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
 
-Expected outputs
+Expected Outputs
 
     Hub and Spoke VNets created and peered
 
@@ -100,17 +97,17 @@ Expected outputs
 
 Next Steps
 
-    Integrate with GitHub Actions for CI/CD validation and linting.
+    Integrate with GitHub Actions for CI/CD validation and linting
 
-    Add Azure Policy for governance and compliance.
+    Add Azure Policy for governance and compliance
 
-    Introduce Application Gateway + WAF for web-tier security.
+    Introduce Application Gateway + WAF for web-tier security
 
-    Extend to include Azure Monitor and Log Analytics.
+    Extend to include Azure Monitor and Log Analytics
 
 Author
 
 Cameron Parent
 Network & Cloud Engineer | Azure Security Engineer | CISSP
-🔗 https://www.linkedin.com/in/camjosephparent/
-• ☁️ Microsoft Azure | Cisco | ISC²
+☁️ Microsoft Azure | Cisco | ISC²
+🔗 LinkedIn https://www.linkedin.com/in/camjosephparent/
