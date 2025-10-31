@@ -1,40 +1,53 @@
-# 🌐 Azure IaC Foundation — Hub-Spoke Architecture
+<p align="center">
+  <h1>🌐 Azure IaC Foundation — Hub-Spoke Architecture</h1>
+  <p><b>Modular Infrastructure-as-Code with Azure Bicep</b></p>
 
-## Overview
-This repository defines a **modular, production-ready Azure environment** using **Bicep** for Infrastructure-as-Code.  
-It follows the **hub-and-spoke network model**, incorporating centralized security, shared services, and application isolation.
+  <img src="https://img.shields.io/badge/Azure-0078D4?logo=microsoftazure&logoColor=white">
+  <img src="https://img.shields.io/badge/Bicep-IaC-blue">
+  <img src="https://img.shields.io/badge/CISSP-ISC2-brightgreen">
+  <img src="https://img.shields.io/badge/license-MIT-lightgrey">
+</p>
 
 ---
 
-## Architecture
+## 🏗️ Overview
 
-### Core Components
+This repository defines a **modular, production-ready Azure environment** using **Bicep** for Infrastructure-as-Code (IaC).  
+It follows the **hub-and-spoke network topology**, incorporating centralized security, shared services, and application isolation.
 
-#### 🏢 Hub Network (`rg-hub-networking`)
-- Central virtual network hosting shared infrastructure  
-- Subnets: `AzureFirewallSubnet`, `sn-hub-mgmt`, `sn-hub-workloads`  
-- Azure Firewall (Standard/Premium SKU)
+---
 
-#### 🌐 Spoke Network (`rg-spoke-app`)
-- Application virtual network with dedicated subnet for workloads  
-- Peered bidirectionally with the hub
+## 🧩 Architecture
 
-#### 🔐 Shared Services (`rg-shared-services`)
+### **Core Components**
+
+#### **Hub Network (`rg-hub-networking`)**
+- Central virtual network hosting shared infrastructure
+- Subnets:
+  - `AzureFirewallSubnet`
+  - `sn-hub-mgmt`
+  - `sn-hub-workloads`
+- Azure Firewall (Standard or Premium SKU)
+
+#### **Spoke Network (`rg-spoke-app`)**
+- Application virtual network with dedicated app subnet
+- Bidirectional VNet peering with the hub
+
+#### **Shared Services (`rg-shared-services`)**
 - Azure Key Vault for secure certificate and secret management
 
-#### 🧱 Resource Groups
-- Each layer isolated for clear management and RBAC boundaries
+#### **Resource Groups**
+- Clear separation for management, security, and RBAC boundaries
 
-### Expandable Topology
-This design supports future expansion into:
-- VPN/ExpressRoute gateways  
+#### **Future Expansion Support**
+- VPN / ExpressRoute Gateways  
 - Azure Bastion  
 - Application Gateway + WAF  
-- Private Endpoints and Service Networking
+- Private Endpoints & Service Networking  
 
 ---
 
-## Repository Structure
+## 🧱 Repository Structure
 
 .
 ├── main.bicep # Root orchestration file (subscription scope)
@@ -48,44 +61,50 @@ This design supports future expansion into:
 
 ---
 
-## Deployment
+## 🚀 Deployment Prerequisites
 
-### Prerequisites
-- **Azure CLI** installed and logged in  
-  ```powershell
-  az login
+### **Azure CLI**
+Make sure you’re logged in:
+```bash
+az login
 
-    Bicep CLI ≥ 0.38.0
+Bicep CLI ≥ 0.38.0
 
-    az bicep version
+Check your version:
 
-    Sufficient permissions to create:
+az bicep version
 
-        Resource Groups
+Required Permissions
 
-        Networking resources
+You must have access to create:
 
-        Azure Firewall
+    Resource Groups
 
-        Key Vault
+    Networking Resources
 
-Validate Configuration
+    Azure Firewall
 
-Preview what will be created:
+    Key Vault
+
+⚙️ Validate Configuration
+
+Preview deployment changes before execution:
 
 az deployment sub what-if `
   --location eastus2 `
   --template-file .\main.bicep `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
 
-Deploy
+🚢 Deploy
+
+Execute deployment:
 
 az deployment sub create `
   --location eastus2 `
   --template-file .\main.bicep `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
 
-Expected Outputs
+✅ Expected Outputs
 
     Hub and Spoke VNets created and peered
 
@@ -93,21 +112,23 @@ Expected Outputs
 
     Optional Key Vault provisioned
 
-    Resource groups tagged and consistent
+    Consistent tagging across all resource groups
 
-Next Steps
+🔄 Next Steps
 
     Integrate with GitHub Actions for CI/CD validation and linting
 
     Add Azure Policy for governance and compliance
 
-    Introduce Application Gateway + WAF for web-tier security
+    Deploy Application Gateway + WAF for web-tier security
 
-    Extend to include Azure Monitor and Log Analytics
+    Extend monitoring with Azure Monitor and Log Analytics
 
-Author
+👤 Author
 
 Cameron Parent
-Network & Cloud Engineer | Azure Security Engineer | CISSP
-☁️ Microsoft Azure | Cisco | ISC²
-🔗 LinkedIn https://www.linkedin.com/in/camjosephparent/
+Network & Cloud Engineer • Azure Security Engineer • CISSP
+
+🔗 LinkedIn Profile
+
+☁️ Microsoft Azure | ISC²
