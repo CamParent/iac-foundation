@@ -71,14 +71,14 @@ graph TD
 ## Prerequisites
 
 - Azure CLI (logged in)  
-  ```bash
-  az login
+```bash
+az login
 
-    Bicep CLI ≥ 0.38
+  Bicep CLI ≥ 0.38
 
-    az bicep version
+  az bicep version
 
-    Permissions to create Resource Groups, Networking, Azure Firewall, and Key Vault.
+  Permissions to create Resource Groups, Networking, Azure Firewall, and Key Vault.
 
 ## Validate
 
