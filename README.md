@@ -77,15 +77,25 @@ Expected Results
 
     Consistent tagging across resource groups
 
+CI/CD Integration
+
+This repository includes a GitHub Actions workflow that:
+
+    Runs syntax validation on all Bicep templates
+
+    Executes an automated Azure “what-if” deployment preview
+
+    Authenticates securely using OpenID Connect (OIDC) federation with Azure
+
 Next Steps
 
-    Add GitHub Actions for CI/CD validation (what-if + lint).
+    Apply Azure Policy for governance and compliance
 
-    Apply Azure Policy for governance/compliance.
+    Extend monitoring with Azure Monitor + Log Analytics
 
-    Add Application Gateway + WAF for web tier.
+    Integrate Application Gateway + WAF for web-tier security
 
-    Integrate Azure Monitor + Log Analytics.
+    Add Automated CI/CD Deployment pipelines
 
 Author
 
