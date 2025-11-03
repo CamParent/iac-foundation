@@ -1,7 +1,15 @@
-# Azure IaC Foundation — Hub-Spoke Architecture
+# Azure IaC Foundation — Modular Hub-Spoke Deployment Framework
 
-This repository defines a modular, production-ready Azure environment using **Bicep**.  
-It implements a **hub-and-spoke** network with centralized security, shared services, and app isolation.
+This repository defines a **modular, production-ready Azure infrastructure** built entirely with **Bicep**, following  
+best practices for **Infrastructure-as-Code (IaC)** and **GitHub Actions-based CI/CD validation**.
+
+It provisions a **hub-and-spoke network architecture** designed for enterprise workloads—centralizing security, shared services, and network management—while allowing flexible expansion for new applications and environments.
+
+**Highlights**
+- **Modular Bicep Design** – Reusable templates for networking, security, and shared services
+- **CI/CD Integration** – Automated syntax validation and what-if deployments via GitHub Actions
+- **Enterprise-Grade Architecture** – Hub-spoke topology with Azure Firewall, Key Vault, and resource isolation
+- **Future-Ready Expansion** – Supports optional integrations such as Bastion, VPN Gateway, and Application Gateway + WAF
 
 [![Bicep Validation](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml)
 
