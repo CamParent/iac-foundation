@@ -11,27 +11,35 @@ It implements a **hub-and-spoke** network with centralized security, shared serv
 
 ```mermaid
 graph TD
-    A[Azure Subscription] --> B[Hub Resource Group<br>rg-hub-networking]
-    B --> C[Hub VNet<br>10.1.0.0/16]
-    C --> D[Azure Firewall<br>Standard/Premium]
-    C --> E[Management Subnet<br>sn-hub-mgmt]
-    C --> F[Workloads Subnet<br>sn-hub-workloads]
-    B --> G[Firewall Subnet<br>AzureFirewallSubnet]
+  A[Azure Subscription]
+  B[Hub Resource Group<br/>rg-hub-networking]
+  A --> B
+  B --> C[Hub VNet<br/>10.1.0.0/16]
+  C --> D[Azure Firewall<br/>Standard/Premium]
+  C --> E[Management Subnet<br/>sn-hub-mgmt]
+  C --> F[Workloads Subnet<br/>sn-hub-workloads]
+  B --> G[Firewall Subnet<br/>AzureFirewallSubnet]
 
-    A --> H[Spoke Resource Group<br>rg-spoke-app]
-    H --> I[Spoke VNet<br>10.2.0.0/16]
-    I --> J[App Subnet<br>sn-app]
+  A --> H[Spoke Resource Group<br/>rg-spoke-app]
+  H --> I[Spoke VNet<br/>10.2.0.0/16]
+  I --> J[App Subnet<br/>sn-app]
 
-    A --> K[Shared Resource Group<br>rg-shared-services]
-    K --> L[Key Vault<br>cert-store-615]
+  A --> K[Shared Resource Group<br/>rg-shared-services]
+  K --> L[Key Vault<br/>cert-store-615]
 
-    C <-->|VNet Peering| I
+  C <-->|VNet Peering| I
 
-    %% Future Integrations (Dotted Connections)
-    C -.-> M[VPN/ExpressRoute Gateway<br>(optional)]
-    C -.-> N[Azure Bastion<br>(optional)]
-    I -.-> O[Application Gateway + WAF<br>(optional)]
-    I -.-> P[Private Endpoint Integrations<br>(optional)]
+  %% Optional integrations
+  C -.-> M[VPN/ExpressRoute Gateway<br/>(optional)]
+  C -.-> N[Azure Bastion<br/>(optional)]
+  I -.-> O[Application Gateway + WAF<br/>(optional)]
+  I -.-> P[Private Endpoint Integrations<br/>(optional)]
+
+  %% Styling (nice Azure-ish look)
+  classDef core fill:#e6f0ff,stroke:#2b6cb0,stroke-width:1px,color:#0a2540;
+  classDef optional fill:#f2f2f2,stroke:#888,stroke-dasharray:3 2,color:#333;
+  class A,B,C,D,E,F,G,H,I,J,K,L core;
+  class M,N,O,P optional;
 ```
 
 ### Hub Network (`rg-hub-networking`)
