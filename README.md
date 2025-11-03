@@ -9,6 +9,29 @@ It implements a **hub-and-spoke** network with centralized security, shared serv
 
 ## Architecture
 
+graph TD
+    A[Azure Subscription] --> B[Hub Resource Group<br>rg-hub-networking]
+    B --> C[Hub VNet<br>10.1.0.0/16]
+    C --> D[Azure Firewall<br>Standard/Premium]
+    C --> E[Management Subnet<br>sn-hub-mgmt]
+    C --> F[Workloads Subnet<br>sn-hub-workloads]
+    B --> G[Firewall Subnet<br>AzureFirewallSubnet]
+
+    A --> H[Spoke Resource Group<br>rg-spoke-app]
+    H --> I[Spoke VNet<br>10.2.0.0/16]
+    I --> J[App Subnet<br>sn-app]
+
+    A --> K[Shared Resource Group<br>rg-shared-services]
+    K --> L[Key Vault<br>cert-store-615]
+
+    C <-->|VNet Peering| I
+
+    %% Future Integrations (Dotted Connections)
+    C -.-> M[VPN/ExpressRoute Gateway<br>(optional)]
+    C -.-> N[Azure Bastion<br>(optional)]
+    I -.-> O[Application Gateway + WAF<br>(optional)]
+    I -.-> P[Private Endpoint Integrations<br>(optional)]
+
 ### Hub Network (`rg-hub-networking`)
 - Central VNet for shared infra
 - Subnets: `AzureFirewallSubnet`, `sn-hub-mgmt`, `sn-hub-workloads`
