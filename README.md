@@ -26,12 +26,6 @@ graph TD
   K --> L[Key Vault\ncert-store-615]
 
   C <-->|VNet Peering| I
-
-  %% Optional integrations (dotted)
-  C -.-> M[VPN or ER Gateway\n(optional)]
-  C -.-> N[Azure Bastion\n(optional)]
-  I -.-> O[App Gateway & WAF\n(optional)]
-  I -.-> P[Private Endpoints\n(optional)]
 ```
 
 ### Hub Network (`rg-hub-networking`)
