@@ -9,6 +9,7 @@ It implements a **hub-and-spoke** network with centralized security, shared serv
 
 ## Architecture
 
+```mermaid
 graph TD
     A[Azure Subscription] --> B[Hub Resource Group<br>rg-hub-networking]
     B --> C[Hub VNet<br>10.1.0.0/16]
@@ -31,6 +32,7 @@ graph TD
     C -.-> N[Azure Bastion<br>(optional)]
     I -.-> O[Application Gateway + WAF<br>(optional)]
     I -.-> P[Private Endpoint Integrations<br>(optional)]
+```
 
 ### Hub Network (`rg-hub-networking`)
 - Central VNet for shared infra
