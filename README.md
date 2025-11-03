@@ -28,13 +28,13 @@ It implements a **hub-and-spoke** network with centralized security, shared serv
 ## Repository Layout
 
 .
-├── main.bicep                  # Subscription-scope orchestration  
-└── modules/
-  ├── networking.bicep          # Hub VNet + subnets  
-  ├── spoke-networking.bicep    # Spoke VNet + app subnet  
-  ├── firewall.bicep            # Azure Firewall deployment    
-  ├── keyvault.bicep            # Shared Key Vault (optional)    
-  └── peering.bicep             # Hub ↔ Spoke VNet peering
+ ├── main.bicep                  # Subscription-scope orchestration  
+ └── modules/
+   ├── networking.bicep          # Hub VNet + subnets  
+   ├── spoke-networking.bicep    # Spoke VNet + app subnet  
+   ├── firewall.bicep            # Azure Firewall deployment    
+   ├── keyvault.bicep            # Shared Key Vault (optional)    
+   └── peering.bicep             # Hub ↔ Spoke VNet peering
 
 ---
 
