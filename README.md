@@ -36,6 +36,7 @@ It implements a **hub-and-spoke** network with centralized security, shared serv
     ├── firewall.bicep          # Azure Firewall deployment    
     ├── keyvault.bicep          # Shared Key Vault (optional)    
     └── peering.bicep           # Hub ↔ Spoke VNet peering
+```
 
 ---
 
