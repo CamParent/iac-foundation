@@ -27,6 +27,7 @@ graph TD
 
   C <-->|VNet Peering| I
 ```
+> **Note:** Future integrations (VPN Gateway, Bastion, Application Gateway + WAF, Private Endpoints) are planned for modular expansion.
 
 ### Hub Network (`rg-hub-networking`)
 - Central VNet for shared infra
