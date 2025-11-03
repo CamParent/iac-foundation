@@ -3,6 +3,8 @@
 This repository defines a modular, production-ready Azure environment using **Bicep**.  
 It implements a **hub-and-spoke** network with centralized security, shared services, and app isolation.
 
+[![Bicep Validation](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml)
+
 ---
 
 ## Architecture
