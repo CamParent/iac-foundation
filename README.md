@@ -80,7 +80,7 @@ graph TD
 
     Permissions to create Resource Groups, Networking, Azure Firewall, and Key Vault.
 
-Validate
+## Validate
 
 Preview deployment changes:
 
@@ -89,42 +89,39 @@ az deployment sub what-if `
   --template-file .\main.bicep `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
 
-Deploy
+## Deploy
 
 az deployment sub create `
   --location eastus2 `
   --template-file .\main.bicep `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
 
-Expected Results
+## Expected Results
 
-    Hub and Spoke VNets created and peered
+- Hub and Spoke VNets created and peered
 
-    Azure Firewall with static public IP
+- Azure Firewall with static public IP
 
-    Optional Key Vault provisioned
+- Optional Key Vault provisioned
 
-    Consistent tagging across resource groups
+- Consistent tagging across resource groups
 
-CI/CD Integration
+## CI/CD Integration
 
 This repository includes a GitHub Actions workflow that:
 
-    Runs syntax validation on all Bicep templates
+- Runs syntax validation on all Bicep templates
 
-    Executes an automated Azure “what-if” deployment preview
+- Executes an automated Azure “what-if” deployment preview
 
-    Authenticates securely using OpenID Connect (OIDC) federation with Azure
+- Authenticates securely using OpenID Connect (OIDC) federation with Azure
 
-Next Steps
+## Next Steps
 
-    Apply Azure Policy for governance and compliance
-
-    Extend monitoring with Azure Monitor + Log Analytics
-
-    Integrate Application Gateway + WAF for web-tier security
-
-    Add Automated CI/CD Deployment pipelines
+- Integrate Azure Policy for compliance and governance
+- Extend CI/CD pipelines for automated deployments
+- Add Azure Bastion and Application Gateway + WAF for production readiness
+- Connect Log Analytics + Azure Monitor for observability
 
 Author
 
