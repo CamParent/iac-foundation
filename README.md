@@ -83,7 +83,7 @@ graph TD
 ## Validate
 
 Preview deployment changes:
-
+```bash
 az deployment sub what-if `
   --location eastus2 `
   --template-file .\main.bicep `
@@ -99,11 +99,8 @@ az deployment sub create `
 ## Expected Results
 
 - Hub and Spoke VNets created and peered
-
 - Azure Firewall with static public IP
-
 - Optional Key Vault provisioned
-
 - Consistent tagging across resource groups
 
 ## CI/CD Integration
