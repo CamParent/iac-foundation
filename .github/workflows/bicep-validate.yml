@@ -4,6 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
+    branches: [ main ]
   workflow_dispatch:
 
 env:
@@ -15,30 +16,39 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      id-token: write   # needed for OIDC
+      id-token: write
       contents: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Azure CLI
-        uses: azure/setup-azure@v3
-
-      # OIDC login (no secrets beyond IDs)
-      - name: Azure login (OIDC)
+      # OIDC login to Azure
+      - name: Azure login
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
+      # Debug: show CLI context
+      - name: Show Azure context
+        run: |
+          az account show -o table || true
+          az version
+
+      # Ensure Bicep is present / current
+      - name: Ensure Bicep
+        run: |
+          az bicep install || true
+          az bicep upgrade
+
       - name: Bicep syntax check
         run: az bicep build --file main.bicep
 
-      - name: What-if (subscription scope)
+      - name: What-if (subscription)
         run: |
           az deployment sub what-if \
             --location $AZ_LOCATION \
-            --template-file main.bicep \
+            --template-file ./main.bicep \
             --parameters $PARAMS
