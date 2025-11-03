@@ -73,12 +73,18 @@ graph TD
 - Azure CLI (logged in)  
 ```bash
 az login
+```
 
-  Bicep CLI ≥ 0.38
+- Bicep CLI ≥ 0.38
+```bash
+az bicep version
+```
 
-  az bicep version
-
-  Permissions to create Resource Groups, Networking, Azure Firewall, and Key Vault.
+- Permissions to create:
+  - Resource Groups
+  - Virtual Networks
+  - Azure Firewall
+  - Key Vault
 
 ## Validate
 
