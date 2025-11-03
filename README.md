@@ -88,13 +88,15 @@ az deployment sub what-if `
   --location eastus2 `
   --template-file .\main.bicep `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
+```
 
 ## Deploy
-
+```bash
 az deployment sub create `
   --location eastus2 `
   --template-file .\main.bicep `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
+```
 
 ## Expected Results
 
