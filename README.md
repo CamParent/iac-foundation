@@ -110,9 +110,7 @@ az deployment sub create `
 This repository includes a GitHub Actions workflow that:
 
 - Runs syntax validation on all Bicep templates
-
 - Executes an automated Azure “what-if” deployment preview
-
 - Authenticates securely using OpenID Connect (OIDC) federation with Azure
 
 ## Next Steps
