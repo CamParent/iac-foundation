@@ -9,7 +9,7 @@ on:
 
 env:
   AZ_LOCATION: eastus2
-  PARAMS: namePrefixHub=hub namePrefixSpoke=spoke-app
+  PARAMS: namePrefixHub=hub namePrefixSpoke=spoke-app deployPolicies=false
 
 jobs:
   validate:
