@@ -58,8 +58,8 @@ param tags object = {
   owner: 'cam'
 }
 
-@description('Deploy Policy-as-Code guardrails?')
-param deployPolicies bool = true
+@description('Toggle policy deployment')
+param deployPolicies bool = false
 
 // ---------------------------
 // Resource Groups (idempotent)
@@ -184,22 +184,11 @@ module spokeToHub './modules/peering.bicep' = {
 // =====================================================
 
 module policies './modules/policy.bicep' = if (deployPolicies) {
-  name: 'mod-policy-guardrails'
+  name: 'mod-policies'
   scope: subscription()
   params: {
-    // Optional: override defaults
-    allowedLocations: [
-      'eastus2'
-    ]
-    requiredTagKeys: [
-      'environment'
-      'owner'
-    ]
-    assignmentNames: {
-      allowedLocations: 'asg-allowed-locations'
-      enforceTags: 'asg-enforce-tags'
-      publicIpSku: 'asg-require-standard-publicip'
-    }
+    allowedLocations: [ location ]           // e.g., 'eastus2'
+    requiredTagKeys: [ 'environment', 'owner' ]
   }
 }
 
