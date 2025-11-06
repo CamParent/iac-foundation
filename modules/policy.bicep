@@ -1,92 +1,74 @@
 targetScope = 'subscription'
 
-@description('Names for policy assignments to display in Azure.')
-param assignmentNames object = {
-  allowedLocations: 'asg-allowed-locations'
-  enforceTags: 'asg-enforce-tags'
-  publicIpSku: 'asg-require-standard-publicip'
-}
-
-@description('Allowed Azure regions at subscription scope.')
+@description('Allowed Azure regions for deployments.')
 param allowedLocations array = [
   'eastus2'
 ]
 
-@description('Required tag keys enforced on all resources.')
+@description('Required tag keys for all resources.')
 param requiredTagKeys array = [
   'environment'
   'owner'
 ]
 
-var defAllowedLocationsName = 'def-allowed-locations'
-var defEnforceTagsName      = 'def-enforce-tags'
-var defPublicIpSkuName      = 'def-require-standard-publicip'
+// Load your existing JSON files (paths are from /modules)
+var allowedJson   = json(loadTextContent('../policies/allowed-locations.json'))
+var enforceJson   = json(loadTextContent('../policies/enforce-tags.json'))
+var stdPipJson    = json(loadTextContent('../policies/require-standard-publicip.json'))
 
-// 1) Define policies
-resource defAllowedLocations 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
-  name: defAllowedLocationsName
-  properties: loadJsonContent('../policies/allowed-locations.json').properties
+/* =========================
+   Policy Definitions
+   ========================= */
+resource defAllowed 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
+  name: 'def-allowed-locations'
+  properties: allowedJson.properties
 }
 
 resource defEnforceTags 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
-  name: defEnforceTagsName
-  properties: loadJsonContent('../policies/enforce-tags.json').properties
+  name: 'def-enforce-tags'
+  properties: enforceJson.properties
 }
 
-resource defPublicIpSku 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
-  name: defPublicIpSkuName
-  properties: loadJsonContent('../policies/require-standard-publicip.json').properties
+resource defRequireStdPip 'Microsoft.Authorization/policyDefinitions@2021-06-01' = {
+  name: 'def-require-standard-publicip'
+  properties: stdPipJson.properties
 }
 
-// 2) Assign policies at subscription scope
-resource asgAllowedLocations 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
-  name: assignmentNames.allowedLocations
+/* =========================
+   Assignments (subscription)
+   ========================= */
+resource asgAllowed 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
+  name: 'asg-allowed-locations'
   properties: {
     displayName: 'Allowed locations (subscription)'
-    scope: subscription().id
-    policyDefinitionId: defAllowedLocations.id
-    parameters: {
-      listOfAllowedLocations: {
-        value: allowedLocations
-      }
-    }
+    policyDefinitionId: defAllowed.id
     enforcementMode: 'Default'
+    parameters: {
+      listOfAllowedLocations: { value: allowedLocations }
+    }
   }
 }
 
 resource asgEnforceTags 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
-  name: assignmentNames.enforceTags
+  name: 'asg-enforce-tags'
   properties: {
     displayName: 'Enforce required tags'
-    scope: subscription().id
     policyDefinitionId: defEnforceTags.id
-    parameters: {
-      requiredTagKeys: {
-        value: requiredTagKeys
-      }
-    }
     enforcementMode: 'Default'
+    parameters: {
+      requiredTagKeys: { value: requiredTagKeys }
+    }
   }
 }
 
-resource asgPublicIpSku 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
-  name: assignmentNames.publicIpSku
+resource asgRequireStdPip 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
+  name: 'asg-require-standard-publicip'
   properties: {
     displayName: 'Public IPs must be Standard SKU'
-    scope: subscription().id
-    policyDefinitionId: defPublicIpSku.id
+    policyDefinitionId: defRequireStdPip.id
     enforcementMode: 'Default'
   }
 }
 
-output policyDefinitionIds object = {
-  allowedLocations: defAllowedLocations.id
-  enforceTags: defEnforceTags.id
-  publicIpSku: defPublicIpSku.id
-}
-
-output policyAssignmentIds object = {
-  allowedLocations: asgAllowedLocations.id
-  enforceTags: asgEnforceTags.id
-  publicIpSku: asgPublicIpSku.id
-}
+output allowedLocationsAssigned array = allowedLocations
+output requiredTags array = requiredTagKeys
