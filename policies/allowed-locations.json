@@ -1,0 +1,27 @@
+{
+  "properties": {
+    "displayName": "Allowed locations (subscription)",
+    "policyType": "Custom",
+    "mode": "All",
+    "description": "Only the specified Azure regions are allowed for resource deployments.",
+    "parameters": {
+      "listOfAllowedLocations": {
+        "type": "Array",
+        "metadata": {
+          "displayName": "Allowed locations"
+        }
+      }
+    },
+    "policyRule": {
+      "if": {
+        "not": {
+          "field": "location",
+          "in": "[parameters('listOfAllowedLocations')]"
+        }
+      },
+      "then": {
+        "effect": "deny"
+      }
+    }
+  }
+}

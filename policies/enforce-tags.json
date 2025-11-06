@@ -1,0 +1,48 @@
+{
+  "properties": {
+    "displayName": "Enforce required tags",
+    "policyType": "Custom",
+    "mode": "Indexed",
+    "description": "Deny resources without the required tag keys.",
+    "parameters": {
+      "requiredTagKeys": {
+        "type": "Array",
+        "metadata": {
+          "displayName": "Required tag keys",
+          "description": "List of tag keys that must exist on all resources."
+        }
+      }
+    },
+    "policyRule": {
+      "if": {
+        "anyOf": [
+          {
+            "field": "tags",
+            "exists": "false"
+          },
+          {
+            "not": {
+              "allOf": [
+                {
+                  "value": "[length(parameters('requiredTagKeys'))]",
+                  "greaterOrEquals": 1
+                },
+                {
+                  "foreach": "tagKey",
+                  "in": "[parameters('requiredTagKeys')]",
+                  "value": {
+                    "field": "[concat('tags[', current('tagKey'), ']')]",
+                    "exists": "true"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    }
+  }
+}

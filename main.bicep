@@ -58,6 +58,9 @@ param tags object = {
   owner: 'cam'
 }
 
+@description('Deploy Policy-as-Code guardrails?')
+param deployPolicies bool = true
+
 // ---------------------------
 // Resource Groups (idempotent)
 // ---------------------------
@@ -173,6 +176,30 @@ module spokeToHub './modules/peering.bicep' = {
     allowForwardedTraffic: true
     allowGatewayTransit: false
     useRemoteGateways: false
+  }
+}
+
+// =====================================================
+// 6)Policy
+// =====================================================
+
+module policies './modules/policy.bicep' = if (deployPolicies) {
+  name: 'mod-policy-guardrails'
+  scope: subscription()
+  params: {
+    // Optional: override defaults
+    allowedLocations: [
+      'eastus2'
+    ]
+    requiredTagKeys: [
+      'environment'
+      'owner'
+    ]
+    assignmentNames: {
+      allowedLocations: 'asg-allowed-locations'
+      enforceTags: 'asg-enforce-tags'
+      publicIpSku: 'asg-require-standard-publicip'
+    }
   }
 }
 

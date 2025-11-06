@@ -1,0 +1,27 @@
+{
+  "properties": {
+    "displayName": "Public IPs must be Standard SKU",
+    "policyType": "Custom",
+    "mode": "All",
+    "description": "Prevents creation of Public IPs that are not Standard SKU.",
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "type",
+            "equals": "Microsoft.Network/publicIPAddresses"
+          },
+          {
+            "not": {
+              "field": "Microsoft.Network/publicIPAddresses/sku.name",
+              "equals": "Standard"
+            }
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    }
+  }
+}
