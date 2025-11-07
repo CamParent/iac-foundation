@@ -57,14 +57,21 @@ graph TD
 
 ```text
 .
-├── main.bicep                  # Subscription-scope orchestration  
-└── modules/
-    ├── networking.bicep        # Hub VNet + subnets  
-    ├── spoke-networking.bicep  # Spoke VNet + app subnet  
-    ├── firewall.bicep          # Azure Firewall deployment    
-    ├── keyvault.bicep          # Shared Key Vault (optional) 
-    ├── policy.bicep            # Azure Policy     
-    └── peering.bicep           # Hub ↔ Spoke VNet peering
+├── main.bicep                      # Subscription-scope orchestration
+├── modules/
+│   ├── networking.bicep            # Hub VNet + subnets
+│   ├── spoke-networking.bicep      # Spoke VNet + app subnet
+│   ├── firewall.bicep              # Azure Firewall deployment
+│   ├── keyvault.bicep              # Shared Key Vault (optional)
+│   ├── policy.bicep                # Azure Policy (defs + assignments wired to JSON)
+│   └── peering.bicep               # Hub ↔ Spoke VNet peering
+├── policies/
+│   ├── allowed-locations.json      # Custom policy: restrict regions
+│   ├── enforce-tags.json           # Custom policy: require tag keys
+│   └── require-standard-publicip.json  # Custom policy: enforce Standard SKU Public IPs
+└── .github/
+    └── workflows/
+        └── bicep-validate.yml      # CI: bicep build + what-if (OIDC login)
 ```
 
 ---
