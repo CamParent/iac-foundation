@@ -1,4 +1,5 @@
 # Azure IaC Foundation — Modular Hub-Spoke Deployment Framework
+[![Bicep Validation](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml)
 
 This repository defines a **modular, production-ready Azure infrastructure** built entirely with **Bicep**, following  
 best practices for **Infrastructure-as-Code (IaC)** and **GitHub Actions-based CI/CD validation**.
@@ -11,7 +12,6 @@ It provisions a **hub-and-spoke network architecture** designed for enterprise w
 - **Enterprise-Grade Architecture** – Hub-spoke topology with Azure Firewall, Key Vault, and resource isolation
 - **Future-Ready Expansion** – Supports optional integrations such as Bastion, VPN Gateway, and Application Gateway + WAF
 
-[![Bicep Validation](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml)
 
 ---
 
@@ -62,7 +62,8 @@ graph TD
     ├── networking.bicep        # Hub VNet + subnets  
     ├── spoke-networking.bicep  # Spoke VNet + app subnet  
     ├── firewall.bicep          # Azure Firewall deployment    
-    ├── keyvault.bicep          # Shared Key Vault (optional)    
+    ├── keyvault.bicep          # Shared Key Vault (optional) 
+    ├── policy.bicep            # Azure Policy     
     └── peering.bicep           # Hub ↔ Spoke VNet peering
 ```
 
@@ -118,6 +119,26 @@ This repository includes a GitHub Actions workflow that:
 - Runs syntax validation on all Bicep templates
 - Executes an automated Azure “what-if” deployment preview
 - Authenticates securely using OpenID Connect (OIDC) federation with Azure
+
+### 📘 CI/CD Validation Results
+
+The latest **automated what-if deployment** was executed via GitHub Actions using OpenID Connect authentication.
+
+✅ **Run #36** — [View Workflow Logs »](https://github.com/CamParent/iac-foundation/actions/runs/19154923538)  
+📦 **Artifact:** [Download what-if-36.zip](https://github.com/CamParent/iac-foundation/actions/runs/19154923538#artifacts)
+
+The `what-if` output confirms that the deployment would:
+- **Create 7** new resources (custom Azure Policy Definitions + Assignments)
+- **Modify 7** existing resources (resource group tagging, hub firewall, and Key Vault RBAC)
+- **Ignore 20** unchanged resources (existing networking, routes, private endpoints, etc.)
+
+**Highlights:**
+- Enforces **Allowed Locations**, **Required Tags**, and **Standard SKU Public IP** Azure Policies  
+- Adds consistent resource tagging across all resource groups  
+- Updates Azure Firewall to **AlertAndDeny** mode with refined subnets  
+- Enables **RBAC authorization** and **purge protection** in Key Vault  
+
+> _This validation was fully automated through GitHub Actions, ensuring every infrastructure change is tested through Azure’s native “what-if” before deployment._
 
 ## Next Steps
 
