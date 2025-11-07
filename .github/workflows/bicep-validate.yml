@@ -43,6 +43,14 @@ jobs:
           az bicep install || true
           az bicep upgrade
 
+      # Verify required secrets exist
+      - name: Verify required secrets exist
+        run: |
+          test -n "${{ secrets.AZURE_CLIENT_ID }}" || (echo "AZURE_CLIENT_ID missing" && exit 1)
+          test -n "${{ secrets.AZURE_TENANT_ID }}" || (echo "AZURE_TENANT_ID missing" && exit 1)
+          test -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" || (echo "AZURE_SUBSCRIPTION_ID missing" && exit 1)
+          echo "All required secrets are present."
+
       - name: Bicep syntax check
         run: az bicep build --file main.bicep
 
