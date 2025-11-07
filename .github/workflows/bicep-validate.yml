@@ -6,10 +6,27 @@ on:
   pull_request:
     branches: [ main ]
   workflow_dispatch:
+    inputs:
+      location:
+        description: Azure region
+        required: true
+        type: choice
+        options: [eastus2, centralus, westus3]
+        default: eastus2
+      deployPolicies:
+        description: Include Policy-as-Code in what-if?
+        required: true
+        type: boolean
+        default: true
+
+# Required repo secrets:
+# - AZURE_CLIENT_ID        (App registration / service principal client ID)
+# - AZURE_TENANT_ID        (AAD tenant ID)
+# - AZURE_SUBSCRIPTION_ID  (target subscription)
 
 env:
-  AZ_LOCATION: eastus2
-  PARAMS: namePrefixHub=hub namePrefixSpoke=spoke-app deployPolicies=true
+  AZ_LOCATION: ${{ inputs.location || 'eastus2' }}
+  PARAMS: namePrefixHub=hub namePrefixSpoke=spoke-app deployPolicies=${{ inputs.deployPolicies || false }}
 
 jobs:
   validate:
@@ -23,6 +40,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Verify required secrets exist
+        run: |
+          test -n "${{ secrets.AZURE_CLIENT_ID }}" || (echo "Missing AZURE_CLIENT_ID" && exit 1)
+          test -n "${{ secrets.AZURE_TENANT_ID }}" || (echo "Missing AZURE_TENANT_ID" && exit 1)
+          test -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" || (echo "Missing AZURE_SUBSCRIPTION_ID" && exit 1)
+
       # OIDC login to Azure
       - name: Azure login
         uses: azure/login@v2
@@ -31,32 +54,29 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      # Debug: show CLI context
       - name: Show Azure context
         run: |
           az account show -o table || true
           az version
 
-      # Ensure Bicep is present / current
       - name: Ensure Bicep
         run: |
           az bicep install || true
           az bicep upgrade
-
-      # Verify required secrets exist
-      - name: Verify required secrets exist
-        run: |
-          test -n "${{ secrets.AZURE_CLIENT_ID }}" || (echo "AZURE_CLIENT_ID missing" && exit 1)
-          test -n "${{ secrets.AZURE_TENANT_ID }}" || (echo "AZURE_TENANT_ID missing" && exit 1)
-          test -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" || (echo "AZURE_SUBSCRIPTION_ID missing" && exit 1)
-          echo "All required secrets are present."
 
       - name: Bicep syntax check
         run: az bicep build --file main.bicep
 
       - name: What-if (subscription)
         run: |
+          set -e
           az deployment sub what-if \
-            --location $AZ_LOCATION \
+            --location "$AZ_LOCATION" \
             --template-file ./main.bicep \
-            --parameters $PARAMS
+            --parameters $PARAMS | tee what-if.txt
+
+      - name: Upload what-if artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: what-if-${{ github.run_number }}
+          path: what-if.txt
