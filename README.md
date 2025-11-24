@@ -38,7 +38,7 @@ graph TD
   C <-->|VNet Peering| I
 
   %% Optional AKS deployment
-  M --> N[AKS Cluster\nspoke-app-aks\nPrivate • Cilium • Azure AD RBAC]
+  M --> N[AKS Cluster\nspoke-app-aks\nPrivate, Cilium, Azure AD RBAC]
 ```
 > **Note:** 
 AKS deployment is optional via the deployAks=true parameter.
