@@ -22,7 +22,7 @@ It provisions a **hub-and-spoke network architecture** designed for enterprise w
 graph TD
   A[Azure Subscription] --> B[Hub Resource Group\nrg-hub-networking]
   B --> C[Hub VNet\n10.1.0.0/16]
-  C --> D[Azure Firewall\nStandard (Deny mode)]
+  C --> D[Azure Firewall\nStandard - Deny mode]
   C --> E[Management Subnet\nsn-hub-mgmt]
   C --> F[Workloads Subnet\nsn-hub-workloads]
   B --> G[Firewall Subnet\nAzureFirewallSubnet]
