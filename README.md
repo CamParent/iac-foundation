@@ -15,6 +15,9 @@ It provisions a **hub-and-spoke network architecture** designed for enterprise w
 
 💡 This repository demonstrates a fully modular Azure Landing Zone–style infrastructure built using Bicep, showcasing IaC principles, secured hub-spoke networking, CI/CD validation, and optional Kubernetes capability. Designed for enterprise scalability, originally deployed as a hands-on learning and architecture exhibition project.
 
+> 🔄 Full AKS deployment is currently performed manually due to quota limitations and cost control. CI/CD integration for AKS rollout is planned for future enhancements.
+
+
 
 ---
 
@@ -144,11 +147,15 @@ az deployment sub create `
 - Hub and Spoke VNets created and peered
 - Azure Firewall with static public IP
 - Optional Key Vault provisioned
+- Optional **private AKS cluster deployed** with Cilium and Azure AD RBAC (if `deployAks=true`)
 - Consistent tagging across resource groups
 
 ## AKS Integration (Optional – Lab-Grade Private Cluster)
 
 This project includes an optional AKS deployment using modular Bicep.
+
+📌 The AKS module was added to demonstrate capability in deploying secure enterprise Kubernetes workloads using Infrastructure-as-Code principles — a highly sought skill in cloud engineering and DevSecOps roles. The configuration mirrors production-grade practices while remaining cost-conscious for lab use.
+
 
 ### Key Configuration
 | Setting | Value |
@@ -185,6 +192,9 @@ kubectl get pods -A
 ```
 
 Validation confirms a private AKS control plane, working node connectivity, Cilium dataplane, and Azure AD RBAC integration.
+
+🛡️ *Because the AKS cluster is private, direct access requires either Azure Bastion/Jumpbox, VPN/ExpressRoute, or using `az aks command invoke` as demonstrated above.*
+
 
 > ⚙️ **Lab Deployment Recommendation:** The AKS cluster intentionally uses a single `Standard_B2s` node with no autoscale to minimize cost during testing. Scale for production workloads.
 
