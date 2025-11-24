@@ -193,6 +193,33 @@ kubectl get pods -A
 
 Validation confirms a private AKS control plane, working node connectivity, Cilium dataplane, and Azure AD RBAC integration.
 
+### 🚀 Deploy Sample Application (Hello World)
+
+Once the AKS cluster is deployed and validated, a simple test application was deployed to confirm pod scheduling, internal service routing, and pod-to-pod network communication over Azure CNI Overlay + Cilium dataplane.
+
+```powershell
+az aks command invoke `
+  --resource-group rg-spoke-app `
+  --name spoke-app-aks `
+  --command "kubectl apply -f hello-world.yaml" `
+  --file .\samples\aks-basic-deploy\hello-world.yaml
+```
+Verify the pod and service:
+
+```powershell
+az aks command invoke `
+  --resource-group rg-spoke-app `
+  --name spoke-app-aks `
+  --command "kubectl get pods -o wide"
+```
+```powershell
+az aks command invoke `
+  --resource-group rg-spoke-app `
+  --name spoke-app-aks `
+  --command "kubectl get svc"
+```
+
+
 🛡️ *Because the AKS cluster is private, direct access requires either Azure Bastion/Jumpbox, VPN/ExpressRoute, or using `az aks command invoke` as demonstrated above.*
 
 
