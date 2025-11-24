@@ -16,6 +16,19 @@ It provisions a **hub-and-spoke network architecture** designed for enterprise w
 
 ---
 
+## Real-World Use Cases
+
+This architecture is designed following enterprise Azure landing zone principles and is suitable for:
+
+✔ **Hybrid Networking:** Hub-spoke topology compatible with VPN/ExpressRoute  
+✔ **Zero Trust Expansion:** Centralized firewall, VNet isolation, Azure AD RBAC  
+✔ **DevSecOps & GitOps Ready:** CI/CD validation via GitHub OIDC → Azure login  
+✔ **Secure AKS Hosting (Optional):** Private cluster with Cilium and Azure AD  
+✔ **Future Readiness:** Can extend to multi-region, cluster autoscaling, Azure DevOps pipelines
+
+
+---
+
 ## Architecture
 
 ```mermaid
@@ -131,7 +144,7 @@ az deployment sub create `
 - Optional Key Vault provisioned
 - Consistent tagging across resource groups
 
-## AKS Integration (Optional)
+## AKS Integration (Optional – Lab-Grade Private Cluster)
 
 This project includes an optional AKS deployment using modular Bicep.
 
@@ -147,6 +160,9 @@ This project includes an optional AKS deployment using modular Bicep.
 | Deployment Trigger | `deployAks=true` |
 
 ### Example deployment including AKS
+
+The AKS module is only provisioned when explicitly enabled using `deployAks=true`.  
+When this parameter is `false` or omitted, the spoke VNet is created **without** any Kubernetes resources.
 
 ```powershell
 az deployment sub create `
@@ -168,6 +184,9 @@ kubectl get pods -A
 
 Validation confirms a private AKS control plane, working node connectivity, Cilium dataplane, and Azure AD RBAC integration.
 
+> ⚠ **Note:** AKS deployment uses a single `Standard_B2s` node and no autoscaling to minimize costs during lab use. Adjust node sizing and scaling when deploying to production environments.
+
+
 ## CI/CD Integration
 
 This repository includes a GitHub Actions workflow that:
@@ -175,6 +194,8 @@ This repository includes a GitHub Actions workflow that:
 - Runs syntax validation on all Bicep templates
 - Executes an automated Azure “what-if” deployment preview
 - Authenticates securely using OpenID Connect (OIDC) federation with Azure
+
+✔ GitHub Actions authenticates securely using **OIDC (no static secrets)** and enforces ARM what-if validation before any deployment.
 
 ### 📘 CI/CD Validation Results
 
@@ -198,10 +219,10 @@ The `what-if` output confirms that the deployment would:
 
 ## Next Steps
 
-- Integrate Azure Policy for compliance and governance
-- Extend CI/CD pipelines for automated deployments
-- Add Azure Bastion and Application Gateway + WAF for production readiness
-- Connect Log Analytics + Azure Monitor for observability
+- Integrate GitOps with Azure Kubernetes Service using FluxCD or ArgoCD
+- Enable Azure Monitor / Container Insights for cluster observability
+- Add autoscaling, ingress controller, and Azure Key Vault CSI driver
+- Configure Azure DevOps or GitHub Release workflow for cluster lifecycle
 
 Author
 
