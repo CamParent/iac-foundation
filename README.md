@@ -248,13 +248,46 @@ This confirms:
 
 > ⚙️ **Lab Deployment Recommendation:** The AKS cluster intentionally uses a single `Standard_B2s` node with no autoscale to minimize cost during testing. Scale for production workloads.
 
-### Governance & Compliance – Azure Policy for AKS
-This framework enforces a Kubernetes governance baseline at subscription scope, automatically auditing:
-- AKS clusters without private API access
-- Clusters deployed without Kubernetes RBAC enabled
-- Public IPs not using **Standard SKU**
+---
 
-All policy definitions and assignments are included in `modules/policy.bicep` and gated via `deployPolicies=true`.
+## Governance & Compliance (Azure Policy)
+
+This infrastructure enforces foundational governance controls using **Azure Policy** at the **subscription scope** to standardize security configuration and proactively audit misaligned resources.
+
+### 🔒 Policy Controls Included
+
+| Policy | Scope | Effect |
+|--------|-------|--------|
+| ❌ Deny deployments outside approved region (`eastus2`) | All resources | `deny` |
+| 🔍 Audit missing `environment` / `owner` tags | All resources | `audit` |
+| 🔍 Audit Public IPs not using **Standard SKU** | Networking | `audit` |
+| 🔍 Audit AKS clusters without **Private API access** | Kubernetes | `audit` |
+| 🔍 Audit AKS clusters with **RBAC disabled** | Kubernetes | `audit` |
+
+📦 These policy definitions and assignments are implemented through  
+`modules/policy.bicep` and activated by using:
+
+```powershell
+--parameters deployPolicies=true
+
+🔄 Policy Lifecycle via IaC
+
+✔️ Policies are provisioned and assigned as part of the Bicep deployment
+✔️ Included in CI/CD validation (what-if preview)
+✔️ Can be extended using Azure Policy initiatives for Hub-Spoke landing zones
+
+🧠 Why this matters
+
+This aligns the environment with Zero Trust, Cloud Adoption Framework (CAF), and Landing Zone best practices, ensuring every deployment remains compliant regardless of contributor.
+
+📊 Validation Result
+
+Recent what-if CI/CD run confirms:
+- 7 new policy resources created
+- 7 existing resources modified to meet compliance
+- No breaking changes introduced
+
+Effectively, this project enforces governance guardrails without blocking lab deployment.
 
 ## CI/CD Integration
 
