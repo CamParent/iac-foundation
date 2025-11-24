@@ -252,6 +252,8 @@ This confirms:
 
 ## Governance & Compliance (Azure Policy)
 
+Governance is applied using modular Bicep in the same way as infrastructure — ensuring policy is version-controlled, peer-reviewed, and validated with what-if before enforcement.
+
 This infrastructure enforces foundational governance controls using **Azure Policy** at the **subscription scope** to standardize security configuration and proactively audit misaligned resources.
 
 ### 🔒 Policy Controls Included
