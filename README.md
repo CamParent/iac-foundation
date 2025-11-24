@@ -271,6 +271,7 @@ This infrastructure enforces foundational governance controls using **Azure Poli
 
 ```powershell
 --parameters deployPolicies=true
+```
 
 🔄 Policy Lifecycle via IaC
 
