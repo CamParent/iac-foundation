@@ -246,9 +246,15 @@ This confirms:
 
 🛡️ *Because the AKS cluster is private, direct access requires either Azure Bastion/Jumpbox, VPN/ExpressRoute, or using `az aks command invoke` as demonstrated above.*
 
-
 > ⚙️ **Lab Deployment Recommendation:** The AKS cluster intentionally uses a single `Standard_B2s` node with no autoscale to minimize cost during testing. Scale for production workloads.
 
+### Governance & Compliance – Azure Policy for AKS
+This framework enforces a Kubernetes governance baseline at subscription scope, automatically auditing:
+- AKS clusters without private API access
+- Clusters deployed without Kubernetes RBAC enabled
+- Public IPs not using **Standard SKU**
+
+All policy definitions and assignments are included in `modules/policy.bicep` and gated via `deployPolicies=true`.
 
 ## CI/CD Integration
 
