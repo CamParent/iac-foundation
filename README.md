@@ -282,6 +282,16 @@ This aligns the environment with Zero Trust, Cloud Adoption Framework (CAF), and
 
 📊 Validation Result
 
+Validate Azure Policy assignments
+```powershell
+az policy assignment list --query "[].{name:name, policy:policyDefinitionId}" -o table
+```
+
+(Optional) View compliance state
+```powershell
+az policy state summarize --management-group <mgmt-group-if-used> --query "results[0].nonCompliantResources"
+```
+
 Recent what-if CI/CD run confirms:
 - 7 new policy resources created
 - 7 existing resources modified to meet compliance
