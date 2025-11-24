@@ -13,6 +13,8 @@ It provisions a **hub-and-spoke network architecture** designed for enterprise w
 - **Future-Ready Expansion** – Supports optional integrations such as Bastion, VPN Gateway, and Application Gateway + WAF
 - **Private AKS Cluster Deployment (optional)** – Azure Kubernetes Service deployed using modular Bicep, Cilium dataplane, Azure CNI overlay, Azure AD integration with RBAC
 
+💡 This repository demonstrates a fully modular Azure Landing Zone–style infrastructure built using Bicep, showcasing IaC principles, secured hub-spoke networking, CI/CD validation, and optional Kubernetes capability. Designed for enterprise scalability, originally deployed as a hands-on learning and architecture exhibition project.
+
 
 ---
 
@@ -184,7 +186,7 @@ kubectl get pods -A
 
 Validation confirms a private AKS control plane, working node connectivity, Cilium dataplane, and Azure AD RBAC integration.
 
-> ⚠ **Note:** AKS deployment uses a single `Standard_B2s` node and no autoscaling to minimize costs during lab use. Adjust node sizing and scaling when deploying to production environments.
+> ⚙️ **Lab Deployment Recommendation:** The AKS cluster intentionally uses a single `Standard_B2s` node with no autoscale to minimize cost during testing. Scale for production workloads.
 
 
 ## CI/CD Integration
@@ -217,12 +219,14 @@ The `what-if` output confirms that the deployment would:
 
 > _This validation was fully automated through GitHub Actions, ensuring every infrastructure change is tested through Azure’s native “what-if” before deployment._
 
-## Next Steps
+## Planned Enhancements
 
 - Integrate GitOps with Azure Kubernetes Service using FluxCD or ArgoCD
 - Enable Azure Monitor / Container Insights for cluster observability
 - Add autoscaling, ingress controller, and Azure Key Vault CSI driver
 - Configure Azure DevOps or GitHub Release workflow for cluster lifecycle
+
+This project was fully architected, developed, and tested independently as part of my Azure Infrastructure-as-Code learning path and lab-to-production validation strategy.
 
 Author
 
