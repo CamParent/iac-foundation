@@ -228,7 +228,7 @@ The `what-if` output confirms that the deployment would:
 
 This project was fully architected, developed, and tested independently as part of my Azure Infrastructure-as-Code learning path and lab-to-production validation strategy.
 
-Author
+## Author
 
 Cameron Parent — Network & Cloud Engineer • Azure Security Engineer • CISSP
 
