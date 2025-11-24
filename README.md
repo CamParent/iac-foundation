@@ -218,7 +218,31 @@ az aks command invoke `
   --name spoke-app-aks `
   --command "kubectl get svc"
 ```
+Test internal connectivity from within the cluster:
 
+```powershell
+az aks command invoke `
+  --resource-group rg-spoke-app `
+  --name spoke-app-aks `
+  --command "kubectl run testpod --rm -it --image=busybox --restart=Never -- wget -O- http://hello-world-service"
+```
+✔️ Successful output:
+The cluster successfully returned a static HTML response:
+
+```css
+Welcome to Azure Container Service (AKS)
+```
+This confirms:
+- Pod deployment succeeded
+- Network routing via CNI Overlay is functional
+- Private service resolution worked
+- Internal pod-to-service connectivity validated using wget from a test pod
+
+### 🧠 Why this location?
+- It continues the flow: *Cluster validated → Application tested*
+- Demonstrates functional proof-of-deployment
+- Highlights Azure CNI Overlay + Cilium success
+- Shows practical use of `az aks command invoke` due to private cluster
 
 🛡️ *Because the AKS cluster is private, direct access requires either Azure Bastion/Jumpbox, VPN/ExpressRoute, or using `az aks command invoke` as demonstrated above.*
 
