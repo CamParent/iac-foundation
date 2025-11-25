@@ -353,6 +353,30 @@ Recent what-if CI/CD run confirms:
 
 Effectively, this project enforces governance guardrails without blocking lab deployment.
 
+### 🔐 Defender for Cloud Integration
+
+This deployment enables Microsoft Defender for Cloud to monitor Kubernetes workloads.
+
+| Setting | Value |
+|--------|-------|
+| Defender Plan | `KubernetesService` |
+| Pricing Tier | Standard |
+| Toggle | `deployDefender=true` |
+| Telemetry Workspace | `law-sec-ops` (via `securityProfile.defender.logAnalyticsWorkspaceResourceId`) |
+
+Defender continuously assesses the AKS cluster for configuration drift, exposed attack surfaces, and container security posture. Security insights are routed to the shared Log Analytics Workspace.
+
+```bicep
+module defender './modules/defender.bicep' = if (deployDefender) {
+  name: 'mod-defender-aks'
+  params: {
+    enableDefender: true
+  }
+}
+```
+
+Defender activation is fully declarative and optional via Bicep parameterization.
+
 ## CI/CD Integration
 
 This repository includes a GitHub Actions workflow that:
