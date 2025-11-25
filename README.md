@@ -287,6 +287,7 @@ jobs:
             --name spoke-app-aks \
             --command "kubectl apply -f hello-world.yaml" \
             --file ./samples/aks-basic-deploy/hello-world.yaml
+```
 
 ### 📊 Latest Deployment Result
 
