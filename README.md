@@ -248,6 +248,23 @@ This confirms:
 
 > ⚙️ **Lab Deployment Recommendation:** The AKS cluster intentionally uses a single `Standard_B2s` node with no autoscale to minimize cost during testing. Scale for production workloads.
 
+### Workload Identity & OIDC (Security Hardening)
+
+The AKS cluster is configured for **modern, identity-based access**:
+
+- **Workload Identity enabled**  
+  - `securityProfile.workloadIdentity.enabled = true`
+- **OIDC Issuer enabled**  
+  - `oidcIssuerProfile.enabled = true`
+- **Defender for Cloud integrated** with a shared Log Analytics workspace  
+  - `securityProfile.defender.logAnalyticsWorkspaceResourceId = /subscriptions/.../resourceGroups/rg-shared-services/providers/Microsoft.OperationalInsights/workspaces/law-sec-ops`
+
+This setup allows future workloads (for example, CI/CD jobs, controllers, or in-cluster apps) to:
+
+- Use **federated credentials** instead of Kubernetes secrets
+- Authenticate to Azure using **Entra ID + OIDC**, not long-lived keys
+- Plug directly into **Defender for Cloud** and **Microsoft Sentinel** via the shared `law-sec-ops` workspace.
+
 ---
 
 ## CI/CD – Automated AKS Deployment via GitHub Actions
