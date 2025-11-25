@@ -1,5 +1,6 @@
 @description('Azure region')
 param location string
+
 @description('Name prefix for firewall resources, e.g. "hub" -> fw-hub, pip-fw-hub')
 param namePrefix string
 
@@ -7,9 +8,9 @@ param namePrefix string
 @description('Azure Firewall SKU tier')
 param firewallSku string = 'Standard'
 
-@allowed([ 'Alert', 'Deny', 'AlertAndDeny', 'Off' ])
+@allowed([ 'Alert', 'Deny', 'Off' ])
 @description('Firewall threat intel mode')
-param threatIntelMode string = 'AlertAndDeny'
+param threatIntelMode string = 'Deny'
 
 @description('ID of the AzureFirewallSubnet in the hub VNet')
 param firewallSubnetId string
@@ -17,34 +18,43 @@ param firewallSubnetId string
 @description('Optional tags')
 param tags object = {}
 
-var pipName = 'pip-fw-${namePrefix}'
-var fwName  = 'fw-${namePrefix}'
+var pipName       = 'pip-fw-${namePrefix}'
+var firewallName  = 'fw-${namePrefix}'
 
+// Public IP for the firewall
 resource pip 'Microsoft.Network/publicIPAddresses@2023-09-01' = {
   name: pipName
   location: location
-  sku: { name: 'Standard' }
-  properties: { publicIPAllocationMethod: 'Static' }
+  sku: {
+    name: 'Standard'
+  }
+  properties: {
+    publicIPAllocationMethod: 'Static'
+  }
   tags: tags
 }
 
-// API version that supports sku { name: AZFW_VNet, tier: Standard|Premium }
+// Azure Firewall
 resource fw 'Microsoft.Network/azureFirewalls@2022-09-01' = {
-  name: fwName
+  name: firewallName
   location: location
   tags: tags
-  sku: {
-    name: 'AZFW_VNet'
-    tier: firewallSku
-  }
   properties: {
+    sku: {
+      name: 'AZFW_VNet'
+      tier: firewallSku
+    }
     threatIntelMode: threatIntelMode
     ipConfigurations: [
       {
         name: 'azureFirewallIpConfig'
         properties: {
-          subnet:          { id: firewallSubnetId }
-          publicIPAddress: { id: pip.id }
+          subnet: {
+            id: firewallSubnetId
+          }
+          publicIPAddress: {
+            id: pip.id
+          }
         }
       }
     ]

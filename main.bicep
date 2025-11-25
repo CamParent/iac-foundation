@@ -40,13 +40,16 @@ param hubSubnets object = {
 @description('App subnet prefix inside the spoke VNet.')
 param appSubnetPrefix string = '10.2.1.0/24'
 
+@description('Subnet prefix for the AKS node pool, e.g. "10.2.10.0/24".')
+param aksSubnetPrefix string = '10.2.10.0/24'
+
 @allowed([ 'Standard', 'Premium' ])
 @description('Azure Firewall SKU.')
 param firewallSku string = 'Standard'
 
-@allowed([ 'Alert', 'Deny', 'AlertAndDeny', 'Off' ])
+@allowed([ 'Alert', 'Deny', 'Off' ])
 @description('Azure Firewall threat intel mode.')
-param threatIntelMode string = 'AlertAndDeny'
+param threatIntelMode string = 'Deny'
 
 @description('Deploy Key Vault (in shared RG)?')
 param deployKeyVault bool = true
@@ -60,6 +63,12 @@ param tags object = {
 
 @description('Toggle policy deployment')
 param deployPolicies bool = false
+
+@description('Deploy AKS cluster into the spoke VNet?')
+param deployAks bool = false
+
+@description('Azure AD group object IDs to grant AKS admin access.')
+param aksAdminGroupObjectIds array = []
 
 // ---------------------------
 // Resource Groups (idempotent)
@@ -125,14 +134,28 @@ module keyVault './modules/keyvault.bicep' = if (deployKeyVault) {
   scope: rgShared
   params: {
     location: location
-    namePrefix: 'cert-store-615'
+    namePrefix: 'cert-store-aks-001'
     enableRbacAuthorization: true
     tags: tags
   }
 }
 
 // =====================================================
-// 4) SPOKE NETWORK
+// 4) LOG ANALYTICS WORKSPACE (required for AKS monitoring)
+//    outputs: logAnalyticsWorkspaceId
+// =====================================================
+module logAnalytics './modules/loganalytics.bicep' = {
+  name: 'mod-loganalytics'
+  scope: rgShared
+  params: {
+    location: location
+    namePrefix: 'law'
+    tags: tags
+  }
+}
+
+// =====================================================
+// 5) SPOKE NETWORK
 //    outputs: vnetId, appSubnetId, vnetName
 // =====================================================
 module spoke './modules/spoke-networking.bicep' = {
@@ -143,12 +166,13 @@ module spoke './modules/spoke-networking.bicep' = {
     namePrefix: namePrefixSpoke
     addressSpace: spokeAddressSpace
     appSubnetPrefix: appSubnetPrefix
+    aksSubnetPrefix: aksSubnetPrefix
     tags: tags
   }
 }
 
 // =====================================================
-// 5) HUB ↔ SPOKE PEERING (call RG-scoped module twice)
+// 6) HUB ↔ SPOKE PEERING (call RG-scoped module twice)
 // =====================================================
 
 // Hub ➜ Spoke
@@ -157,7 +181,7 @@ module hubToSpoke './modules/peering.bicep' = {
   scope: resourceGroup(hubRgName)
   params: {
     localVnetName: hubNet.outputs.vnetName
-    remoteVnetId:  resourceId(spokeRgName, 'Microsoft.Network/virtualNetworks', spoke.outputs.vnetName)
+    remoteVnetId:  spoke.outputs.vnetId
     allowVnetAccess: true
     allowForwardedTraffic: true
     allowGatewayTransit: false
@@ -171,7 +195,7 @@ module spokeToHub './modules/peering.bicep' = {
   scope: resourceGroup(spokeRgName)
   params: {
     localVnetName: spoke.outputs.vnetName
-    remoteVnetId:  resourceId(hubRgName, 'Microsoft.Network/virtualNetworks', hubNet.outputs.vnetName)
+    remoteVnetId:  hubNet.outputs.vnetId
     allowVnetAccess: true
     allowForwardedTraffic: true
     allowGatewayTransit: false
@@ -180,7 +204,24 @@ module spokeToHub './modules/peering.bicep' = {
 }
 
 // =====================================================
-// 6)Policy
+// 7) AKS CLUSTER (optional)
+//    Deploys a private AKS cluster into the spoke VNet
+// =====================================================
+module aks './modules/aks.bicep' = if (deployAks) {
+  name: 'mod-aks-${namePrefixSpoke}'
+  scope: rgSpoke
+  params: {
+    location: location
+    aksName: '${namePrefixSpoke}-aks'
+    aksSubnetId: spoke.outputs.aksSubnetId
+    adminGroupObjectIds: aksAdminGroupObjectIds
+    tags: tags
+    logAnalyticsWorkspaceId: logAnalytics.outputs.logAnalyticsWorkspaceId
+  }
+}
+
+// =====================================================
+// 8)Policy
 // =====================================================
 
 module policies './modules/policy.bicep' = if (deployPolicies) {
@@ -188,7 +229,6 @@ module policies './modules/policy.bicep' = if (deployPolicies) {
   scope: subscription()
   params: {
     allowedLocations: [ location ]           // e.g., 'eastus2'
-    requiredTagKeys: [ 'environment', 'owner' ]
   }
 }
 
@@ -199,3 +239,5 @@ output hubVnetId string       = hubNet.outputs.vnetId
 output spokeVnetId string     = spoke.outputs.vnetId
 output firewallPublicIp string = firewall.outputs.firewallPublicIp
 output keyVaultId string = deployKeyVault ? keyVault.outputs.keyVaultId : ''
+output aksName string  = deployAks ? aks.outputs.aksNameOut : ''
+output aksFqdn string  = deployAks ? aks.outputs.aksFqdn : ''

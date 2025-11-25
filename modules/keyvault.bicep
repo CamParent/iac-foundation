@@ -1,7 +1,7 @@
 @description('Azure region')
 param location string
 
-@description('Name prefix, e.g. "cert-store-615" -> kv-cert-store-615')
+@description('Name prefix, e.g. "cert-store-aks-001" -> kv-cert-store-aks-001')
 param namePrefix string
 
 @description('Optional tags')

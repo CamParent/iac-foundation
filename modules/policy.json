@@ -1,0 +1,206 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "2657578506137923653"
+    }
+  },
+  "parameters": {
+    "allowedLocations": {
+      "type": "array",
+      "defaultValue": [
+        "eastus2"
+      ],
+      "metadata": {
+        "description": "Allowed Azure regions for deployments."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "custom-allowed-locations",
+      "properties": {
+        "displayName": "Allowed locations (subscription)",
+        "description": "Restricts deployments to a set of approved regions.",
+        "policyType": "Custom",
+        "mode": "All",
+        "metadata": {
+          "category": "General"
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "field": "location",
+                "notIn": "[parameters('allowedLocations')]"
+              },
+              {
+                "field": "location",
+                "notEquals": "global"
+              }
+            ]
+          },
+          "then": {
+            "effect": "deny"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "custom-require-standard-publicip",
+      "properties": {
+        "displayName": "Public IPs must use Standard SKU",
+        "description": "Audits Public IP resources that are not using Standard SKU.",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "metadata": {
+          "category": "Networking"
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Network/publicIPAddresses"
+              },
+              {
+                "field": "Microsoft.Network/publicIPAddresses/sku.name",
+                "notEquals": "Standard"
+              }
+            ]
+          },
+          "then": {
+            "effect": "audit"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "custom-aks-audit-not-private",
+      "properties": {
+        "displayName": "Audit AKS clusters without private API server",
+        "description": "Audits AKS clusters where apiServerAccessProfile.enablePrivateCluster is not enabled.",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "metadata": {
+          "category": "Kubernetes"
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.ContainerService/managedClusters"
+              },
+              {
+                "field": "Microsoft.ContainerService/managedClusters/apiServerAccessProfile.enablePrivateCluster",
+                "notEquals": true
+              }
+            ]
+          },
+          "then": {
+            "effect": "audit"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "custom-aks-audit-no-rbac",
+      "properties": {
+        "displayName": "Audit AKS clusters without Kubernetes RBAC enabled",
+        "description": "Audits AKS clusters where enableRBAC is false.",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "metadata": {
+          "category": "Kubernetes"
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.ContainerService/managedClusters"
+              },
+              {
+                "field": "Microsoft.ContainerService/managedClusters/enableRBAC",
+                "equals": false
+              }
+            ]
+          },
+          "then": {
+            "effect": "audit"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2022-06-01",
+      "name": "asg-allowed-locations",
+      "properties": {
+        "displayName": "Allowed locations (subscription)",
+        "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-allowed-locations')]",
+        "enforcementMode": "Default"
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-allowed-locations')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2022-06-01",
+      "name": "asg-require-standard-publicip",
+      "properties": {
+        "displayName": "Public IPs must be Standard SKU",
+        "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-require-standard-publicip')]",
+        "enforcementMode": "Default"
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-require-standard-publicip')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2022-06-01",
+      "name": "asg-aks-audit-not-private",
+      "properties": {
+        "displayName": "AKS clusters should use private API server",
+        "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-aks-audit-not-private')]",
+        "enforcementMode": "Default"
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-aks-audit-not-private')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2022-06-01",
+      "name": "asg-aks-audit-no-rbac",
+      "properties": {
+        "displayName": "AKS clusters should have Kubernetes RBAC enabled",
+        "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-aks-audit-no-rbac')]",
+        "enforcementMode": "Default"
+      },
+      "dependsOn": [
+        "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-aks-audit-no-rbac')]"
+      ]
+    }
+  ],
+  "outputs": {
+    "allowedLocationsAssigned": {
+      "type": "array",
+      "value": "[parameters('allowedLocations')]"
+    }
+  }
+}
