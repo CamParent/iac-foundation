@@ -394,6 +394,24 @@ module defender './modules/defender.bicep' = if (deployDefender) {
 
 Defender activation is fully declarative and optional via Bicep parameterization.
 
+### 🔒 AKS Governance – Subscription-Level Enforcement (Phase 2)
+
+As part of cluster security hardening, four custom Azure Policy definitions are deployed and automatically assigned via Bicep to enforce mandatory AKS security controls at subscription scope:
+
+| Policy Assignment | Effect | Description |
+|------------------|--------|-------------|
+| `asg3-allowed-locations` | Deny | Blocks deployments outside `eastus2` |
+| `asg3-require-standard-publicip` | Audit | Flags Public IPs not using Standard SKU |
+| `asg3-aks-audit-not-private` | Audit | Flags AKS clusters exposing public API server |
+| `asg3-aks-audit-no-rbac` | Audit | Flags AKS clusters without Kubernetes RBAC enabled |
+
+These policies were verified post-deployment using `az rest`, confirming active enforcement:
+```bash
+az rest --method get \
+  --url "https://management.azure.com/subscriptions/<SUB-ID>/providers/Microsoft.Authorization/policyAssignments?api-version=2022-06-01" \
+  --query "value[?starts_with(name, 'asg3-')].{name:name, scope:properties.scope, policyDefinitionId:properties.policyDefinitionId}" -o table
+```
+
 ## CI/CD Integration
 
 This repository includes a GitHub Actions workflow that:
