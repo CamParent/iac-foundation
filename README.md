@@ -94,6 +94,7 @@ Future proposed integrations: VPN Gateway, Azure Bastion, Application Gateway + 
 │   ├── keyvault.bicep              # Shared Key Vault (optional)
 │   ├── policy.bicep                # Azure Policy (defs + assignments wired to JSON)
 │   ├── peering.bicep               # Hub ↔ Spoke VNet peering
+│   ├── defender.bicep              # Microsoft Defender
 │   └── aks.bicep                   # Optional AKS cluster deployment
 ├── policies/
 │   ├── allowed-locations.json      # Custom policy: restrict regions
