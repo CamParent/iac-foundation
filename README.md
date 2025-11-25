@@ -250,6 +250,56 @@ This confirms:
 
 ---
 
+## CI/CD – Automated AKS Deployment via GitHub Actions
+
+This repository now includes a GitHub Actions workflow (`aks-deploy.yml`) that automatically deploys a sample app to the AKS cluster using OIDC authentication and `az aks command invoke`.
+
+| Feature | Value |
+|--------|-------|
+| Authentication | OpenID Connect (OIDC) — no stored credentials |
+| Trigger | Manual (`workflow_dispatch`) or file changes |
+| Deployment Target | Private AKS Cluster (`spoke-app-aks`) |
+| Manifest Source | `samples/aks-basic-deploy/hello-world.yaml` |
+
+### 🚀 Workflow Execution
+
+```yaml
+name: AKS Sample App Deploy
+permissions:
+  id-token: write   # Required for OIDC → Azure
+  contents: read
+
+jobs:
+  deploy-hello-world:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v2
+        with:
+          client-id:     ${{ env.AZURE_CLIENT_ID }}
+          tenant-id:     ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy app
+        run: |
+          az aks command invoke \
+            --resource-group rg-spoke-app \
+            --name spoke-app-aks \
+            --command "kubectl apply -f hello-world.yaml" \
+            --file ./samples/aks-basic-deploy/hello-world.yaml
+
+### 📊 Latest Deployment Result
+
+✔ Workflow **passed successfully**  
+✔ Pod scheduled successfully  
+✔ Internal service resolution confirmed  
+✔ CNI Overlay + Cilium dataplane fully operational  
+✔ Validated without any need for kubeconfig access
+
+> _A private AKS cluster with OIDC-enabled GitHub automation is fully functional — demonstrating secure DevOps practices using cloud-native CI/CD._
+
+---
+
 ## Governance & Compliance (Azure Policy)
 
 Governance is applied using modular Bicep in the same way as infrastructure — ensuring policy is version-controlled, peer-reviewed, and validated with what-if before enforcement.
