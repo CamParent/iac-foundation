@@ -94,3 +94,39 @@ These align to the lab’s Zero Trust–oriented architecture and may be **impor
 | AKS – Pods Using Public Registry | Container supply-chain risk | AKS via IaC |
 
 > Rules are disabled by default (`enabled: false`) to avoid accidental activation in lab environments. They may be enabled post-import.
+
+## Detection-as-Code Deployment (Bicep + JSON)
+
+In addition to manual import, this project supports **automated deployment of analytics rules** using Infrastructure-as-Code.
+
+Sentinel rule definitions are stored as **parameterized JSON templates** in:
+
+```text
+sentinel/analytics/
+├── identity-impossible-travel.json
+├── network-high-volume-deny.json
+└── aks-public-registry-pods.json
+```
+These are deployed using the module:
+
+```text
+sentinel/analytics.bicep
+```
+
+### Enabling via main.bicep
+
+Analytics rules can be deployed as part of the main.bicep subscription-level orchestration:
+
+```bicep
+az deployment sub create `
+  --location eastus2 `
+  --template-file ./main.bicep `
+  --parameters deploySentinelAnalytics=true
+```
+
+This will create 3 Microsoft.SecurityInsights/alertRules resources inside the law-sec-ops workspace.
+
+### Behavior Notes
+- Rules are deployed in a **disabled** state by default (enabled: false)
+- They are ready to be enabled or modified through the Azure Portal or GitHub workflows
+- Future expansion can include CI/CD triggers for updating rule logic automatically
