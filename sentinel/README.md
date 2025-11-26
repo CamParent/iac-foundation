@@ -69,6 +69,9 @@ sentinel/
 | AKS | aks.bicep |
 | Telemetry | logging.bicep (law-sec-ops) |
 
+These analytics rules extend the project from *Infrastructure & Policy-as-Code* into  
+**Detection-as-Code (SOC-ready monitoring)**.
+
 ---
 
 ## Analytics Rule Templates
