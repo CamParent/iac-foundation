@@ -70,3 +70,24 @@ sentinel/
 | Telemetry | logging.bicep (law-sec-ops) |
 
 ---
+
+## Analytics Rule Templates
+
+The following Scheduled Analytics Rule templates are included under:
+
+sentinel/analytics/
+├── identity-impossible-travel.json
+├── network-high-volume-deny.json
+└── aks-public-registry-pods.json
+
+These align to the lab’s Zero Trust–oriented architecture and may be **imported into Microsoft Sentinel** via:
+
+**Microsoft Sentinel → Analytics → + Create → Scheduled query rule → Import JSON**
+
+| Rule Name | Detection Focus | Related IaC Component |
+|-----------|------------------|----------------------|
+| Identity – Possible Impossible Travel | Sign-in anomalies | Identity / RBAC |
+| Network – High Volume Azure Firewall Deny | Firewall deny spikes | Hub Firewall |
+| AKS – Pods Using Public Registry | Container supply-chain risk | AKS via IaC |
+
+> Rules are disabled by default (`enabled: false`) to avoid accidental activation in lab environments. They may be enabled post-import.
