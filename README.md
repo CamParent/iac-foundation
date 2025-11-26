@@ -1,36 +1,43 @@
 # Azure IaC Foundation — Modular Hub-Spoke Deployment Framework
 [![Bicep Validation](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml)
 
-This repository defines a **modular, production-ready Azure infrastructure** built entirely with **Bicep**, following  
-best practices for **Infrastructure-as-Code (IaC)** and **GitHub Actions-based CI/CD validation**.
+This repository defines a **modular, production-lean Azure infrastructure** built with **Bicep**, following best practices for:
 
-It provisions a **hub-and-spoke network architecture** designed for enterprise workloads—centralizing security, shared services, and network management—while allowing flexible expansion for new applications and environments.
+- **Infrastructure-as-Code (IaC)**
+- **Hub–spoke network architectures**
+- **Azure Policy–driven governance**
+- **GitHub Actions CI/CD with OIDC**
+- **Optional private AKS cluster with Defender + workload identity**
 
-**Highlights**
-- **Modular Bicep Design** – Reusable templates for networking, security, and shared services
-- **CI/CD Integration** – Automated syntax validation and what-if deployments via GitHub Actions
-- **Enterprise-Grade Architecture** – Hub-spoke topology with Azure Firewall, Key Vault, and resource isolation
-- **Future-Ready Expansion** – Supports optional integrations such as Bastion, VPN Gateway, and Application Gateway + WAF
-- **Private AKS Cluster Deployment (optional)** – Azure Kubernetes Service deployed using modular Bicep, Cilium dataplane, Azure CNI overlay, Azure AD integration with RBAC
+It’s designed as an **Azure landing zone–style lab** that looks and behaves like a real enterprise environment, while staying cost-conscious.
 
-💡 This repository demonstrates a fully modular Azure Landing Zone–style infrastructure built using Bicep, showcasing IaC principles, secured hub-spoke networking, CI/CD validation, and optional Kubernetes capability. Designed for enterprise scalability, originally deployed as a hands-on learning and architecture exhibition project.
+---
 
-> 🔄 Full AKS deployment is currently performed manually due to quota limitations and cost control. CI/CD integration for AKS rollout is planned for future enhancements.
+## 🔍 Highlights
 
+- **Modular Bicep Design** – Reusable modules for hub, spoke, firewall, shared services, policy, Defender, and AKS.
+- **Hub–Spoke Architecture** – Central hub with shared security services and peered spoke for app workloads.
+- **Governance-as-Code** – Custom Azure Policy definitions + assignments deployed via Bicep.
+- **Security Integration** – Defender for Cloud, Log Analytics (`law-sec-ops`), and Sentinel-ready telemetry.
+- **AKS (Optional)** – Private AKS cluster with Azure CNI Overlay, Cilium dataplane, Azure AD RBAC, Defender, and Workload Identity.
+- **CI/CD** – GitHub Actions for:
+  - Bicep build + what-if
+  - AKS sample app deployment using OIDC and `az aks command invoke`.
 
+> 💡 This repo is both a **learning lab** and a **portfolio-grade reference** for secure Azure infrastructure and Kubernetes design.
 
 ---
 
 ## Real-World Use Cases
 
-This architecture is designed following enterprise Azure landing zone principles and is suitable for:
+This architecture aligns with Azure Landing Zone and Zero Trust fundamentals:
 
-✔ **Hybrid Networking:** Hub-spoke topology compatible with VPN/ExpressRoute  
-✔ **Zero Trust Expansion:** Centralized firewall, VNet isolation, Azure AD RBAC  
-✔ **DevSecOps & GitOps Ready:** CI/CD validation via GitHub OIDC → Azure login  
-✔ **Secure AKS Hosting (Optional):** Private cluster with Cilium and Azure AD  
-✔ **Future Readiness:** Can extend to multi-region, cluster autoscaling, Azure DevOps pipelines
-
+✔ **Hybrid networking foundations** (hub–spoke, ready for VPN/ExpressRoute)  
+✔ **Network isolation & inspection** via Azure Firewall  
+✔ **Centralized shared services** (Key Vault, Log Analytics workspace)  
+✔ **Governance & compliance** via Azure Policy (regions, tags, IP SKU, AKS controls)  
+✔ **Secure AKS workloads** (private API, RBAC, Defender, workload identity)  
+✔ **DevSecOps & GitOps ready** through CI/CD + OIDC auth
 
 ---
 
@@ -40,7 +47,7 @@ This architecture is designed following enterprise Azure landing zone principles
 graph TD
   A[Azure Subscription] --> B[Hub Resource Group\nrg-hub-networking]
   B --> C[Hub VNet\n10.1.0.0/16]
-  C --> D[Azure Firewall\nStandard - Deny mode]
+  C --> D[Azure Firewall\nStandard]
   C --> E[Management Subnet\nsn-hub-mgmt]
   C --> F[Workloads Subnet\nsn-hub-workloads]
   B --> G[Firewall Subnet\nAzureFirewallSubnet]
@@ -52,33 +59,22 @@ graph TD
 
   A --> K[Shared Resource Group\nrg-shared-services]
   K --> L[Key Vault\nkv-cert-store-615]
+  K --> O[Log Analytics Workspace\nlaw-sec-ops]
 
   C <-->|VNet Peering| I
 
   %% Optional AKS deployment
-  M --> N[AKS Cluster\nspoke-app-aks\nPrivate, Cilium, Azure AD RBAC]
+  M --> N[AKS Cluster\nspoke-app-aks\nPrivate, Cilium, AAD RBAC, Defender, WI]
 ```
-> **Note:** 
-AKS deployment is optional via the deployAks=true parameter.
-The cluster uses Azure CNI Overlay, Cilium dataplane, system-assigned identity, and private API access via Private Link.
-Future proposed integrations: VPN Gateway, Azure Bastion, Application Gateway + WAF, Additional Private Endpoints, and Log Analytics / Azure Monitor.
-
-### Hub Network (`rg-hub-networking`)
-- Central VNet for shared infra
-- Subnets: `AzureFirewallSubnet`, `sn-hub-mgmt`, `sn-hub-workloads`
-- Azure Firewall (Standard or Premium)
-
-### Spoke Network (`rg-spoke-app`)
-- Application VNet with dedicated app subnet
-- Bidirectional peering with the hub
-- Optionally deploys a private AKS cluster (`spoke-app-aks`) using Azure CNI Overlay + Cilium dataplane
-- AKS control plane exposed via `privatelink`, not publicly accessible
-- Secured via Azure AD + Kubernetes RBAC
-
-### Shared Services (`rg-shared-services`)
-- Azure Key Vault for certificates and secrets
-
-**Future-ready**: VPN/ExpressRoute Gateways, Bastion, Application Gateway + WAF, Private Endpoints.
+**Key points**:
+- **Hub** (rg-hub-networking)
+    - Hub VNet, Azure Firewall, management + workloads subnets.
+- **Spoke** (rg-spoke-app)
+    - App VNet with app + AKS subnet; peered to hub.
+    - Optional **private AKS** cluster.
+- **Shared Services** (rg-shared-services)
+    - Key Vault for secrets/certs.
+    - Log Analytics workspace law-sec-ops for Defender + Sentinel.
 
 ---
 
@@ -121,11 +117,12 @@ az bicep version
 
 - Permissions to create:
   - Resource Groups
-  - Virtual Networks
+  - VNets
   - Azure Firewall
   - Key Vault
+  - (Optional) AKS + Defender
 
-## Validate
+## Validate & Deploy (Base Hub-Spoke)
 
 Preview deployment changes:
 ```bash
@@ -135,7 +132,7 @@ az deployment sub what-if `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
 ```
 
-## Deploy
+Deploy:
 ```bash
 az deployment sub create `
   --location eastus2 `
@@ -143,36 +140,33 @@ az deployment sub create `
   --parameters namePrefixHub=hub namePrefixSpoke=spoke-app
 ```
 
-## Expected Results
+### Expected Results
 
-- Hub and Spoke VNets created and peered
-- Azure Firewall with static public IP
-- Optional Key Vault provisioned
-- Optional **private AKS cluster deployed** with Cilium and Azure AD RBAC (if `deployAks=true`)
-- Consistent tagging across resource groups
+- rg-hub-networking, rg-spoke-app, rg-shared-services created.
+- Hub & spoke VNets provisioned and peered.
+- Azure Firewall deployed with standard configuration.
+- Shared Key Vault provisioned (if enabled).
+- Governance + Defender optional, controlled by parameters (e.g. deployPolicies, deployDefender, deployAks).
 
-## AKS Integration (Optional – Lab-Grade Private Cluster)
+## AKS Integration (Optional – Private Cluster)
 
-This project includes an optional AKS deployment using modular Bicep.
-
-📌 The AKS module was added to demonstrate capability in deploying secure enterprise Kubernetes workloads using Infrastructure-as-Code principles — a highly sought skill in cloud engineering and DevSecOps roles. The configuration mirrors production-grade practices while remaining cost-conscious for lab use.
-
+When deployAks=true, modules/aks.bicep provisions a **private AKS cluster** in the spoke:
 
 ### Key Configuration
+
 | Setting | Value |
 |--------|-------|
-| Cluster Type | Private |
+| Cluster Type | Private (no public API) |
 | Network Plugin | Azure CNI (Overlay) |
 | Dataplane | Cilium |
 | Identity | System-assigned |
 | Auth | Azure AD with Kubernetes RBAC |
-| Node Pool Size | 1× Standard_B2s (autoscale off for lab use) |
-| Deployment Trigger | `deployAks=true` |
+| Node Pool | systemnp – Standard_B2s x1–2 |
+| Defender | Enabled and wired to law-sec-ops |
+| Workload Identity | Enabled |
+| OIDC Issuer | Enabled |
 
-### Example deployment including AKS
-
-The AKS module is only provisioned when explicitly enabled using `deployAks=true`.  
-When this parameter is `false` or omitted, the spoke VNet is created **without** any Kubernetes resources.
+### Deploy Including AKS
 
 ```powershell
 az deployment sub create `
@@ -181,7 +175,7 @@ az deployment sub create `
   --parameters deployAks=true
 ```
 
-### Validate AKS Cluster
+### Validate AKS Cluster (Optional)
 
 ```powershell
 az aks get-credentials `
@@ -194,9 +188,7 @@ kubectl get pods -A
 
 Validation confirms a private AKS control plane, working node connectivity, Cilium dataplane, and Azure AD RBAC integration.
 
-### 🚀 Deploy Sample Application (Hello World)
-
-Once the AKS cluster is deployed and validated, a simple test application was deployed to confirm pod scheduling, internal service routing, and pod-to-pod network communication over Azure CNI Overlay + Cilium dataplane.
+### 🚀 Sample App – Hello World (Manual)
 
 ```powershell
 az aks command invoke `
@@ -205,7 +197,7 @@ az aks command invoke `
   --command "kubectl apply -f hello-world.yaml" `
   --file .\samples\aks-basic-deploy\hello-world.yaml
 ```
-Verify the pod and service:
+Verify pod and service:
 
 ```powershell
 az aks command invoke `
@@ -219,7 +211,7 @@ az aks command invoke `
   --name spoke-app-aks `
   --command "kubectl get svc"
 ```
-Test internal connectivity from within the cluster:
+Internal connectivity test:
 
 ```powershell
 az aks command invoke `
@@ -227,78 +219,229 @@ az aks command invoke `
   --name spoke-app-aks `
   --command "kubectl run testpod --rm -it --image=busybox --restart=Never -- wget -O- http://hello-world-service"
 ```
-✔️ Successful output:
-The cluster successfully returned a static HTML response:
+✔ Confirms:
+  - Pod deployment succeeded
+  - Service discovery works
+  - Azure CNI Overlay + Cilium dataplane routes traffic correctly
+  - Private AKS control plane + internal connectivity are functional.
 
-```css
-Welcome to Azure Container Service (AKS)
+## Workload Identity & OIDC (Security Hardening)
+
+Enabled in aks.bicep:
+
+```bicep
+securityProfile: {
+  defender: {
+    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceId
+    securityMonitoring: {
+      enabled: true
+    }
+  }
+  workloadIdentity: {
+    enabled: true
+  }
+}
+
+oidcIssuerProfile: {
+  enabled: true
+}
 ```
-This confirms:
-- Pod deployment succeeded
-- Network routing via CNI Overlay is functional
-- Private service resolution worked
-- Internal pod-to-service connectivity validated using wget from a test pod
 
-### 🧠 Why this location?
-- It continues the flow: *Cluster validated → Application tested*
-- Demonstrates functional proof-of-deployment
-- Highlights Azure CNI Overlay + Cilium success
-- Shows practical use of `az aks command invoke` due to private cluster
+This enables pods to authenticate to Azure using **federated tokens** instead of Kubernetes secrets.
 
-🛡️ *Because the AKS cluster is private, direct access requires either Azure Bastion/Jumpbox, VPN/ExpressRoute, or using `az aks command invoke` as demonstrated above.*
+### Workload Identity Demo (wi-demo)
 
-> ⚙️ **Lab Deployment Recommendation:** The AKS cluster intentionally uses a single `Standard_B2s` node with no autoscale to minimize cost during testing. Scale for production workloads.
+A user-assigned managed identity (uai-aks-wi-demo) is created in rg-shared-services and bound to a pod via workload identity:
 
-### Workload Identity & OIDC (Security Hardening)
+```yaml
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wi-demo
+  labels:
+    azure.workload.identity/use: "true"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: wi-demo-sa
+  namespace: wi-demo
+  annotations:
+    azure.workload.identity/client-id: "<UAI_CLIENT_ID>"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wi-demo-app
+  namespace: wi-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wi-demo-app
+  template:
+    metadata:
+      labels:
+        app: wi-demo-app
+    spec:
+      serviceAccountName: wi-demo-sa
+      containers:
+        - name: wi-demo
+          image: mcr.microsoft.com/oss/busybox/busybox:1.36
+          command: ["sh", "-c", "sleep 3600"]
+```
 
-The AKS cluster is configured for **modern, identity-based access**:
+Apply and Validate:
 
-- **Workload Identity enabled**  
-  - `securityProfile.workloadIdentity.enabled = true`
-- **OIDC Issuer enabled**  
-  - `oidcIssuerProfile.enabled = true`
-- **Defender for Cloud integrated** with a shared Log Analytics workspace  
-  - `securityProfile.defender.logAnalyticsWorkspaceResourceId = /subscriptions/.../resourceGroups/rg-shared-services/providers/Microsoft.OperationalInsights/workspaces/law-sec-ops`
+```powershell
+az aks command invoke `
+  --resource-group rg-spoke-app `
+  --name spoke-app-aks `
+  --command "kubectl apply -f wi-demo.yaml" `
+  --file .\samples\aks-basic-deploy\wi-demo.yaml
+```
 
-This setup allows future workloads (for example, CI/CD jobs, controllers, or in-cluster apps) to:
+List the token file and environment variables inside the pod:
 
-- Use **federated credentials** instead of Kubernetes secrets
-- Authenticate to Azure using **Entra ID + OIDC**, not long-lived keys
-- Plug directly into **Defender for Cloud** and **Microsoft Sentinel** via the shared `law-sec-ops` workspace.
+```powershell
+az aks command invoke `
+  --resource-group rg-spoke-app `
+  --name spoke-app-aks `
+  --command "kubectl exec deploy/wi-demo-app -n wi-demo -- sh -c 'ls -R /var/run/secrets/azure/tokens || echo no-token-dir'"
+
+az aks command invoke `
+  --resource-group rg-spoke-app `
+  --name spoke-app-aks `
+  --command "kubectl exec deploy/wi-demo-app -n wi-demo -- sh -c 'env | grep AZURE_ || echo no-azure-env'"
+```
+✔ Successful validation shows:
+  - /var/run/secrets/azure/tokens/azure-identity-token present
+  - AZURE_CLIENT_ID, AZURE_FEDERATED_TOKEN_FILE, AZURE_TENANT_ID set
+
+This confirms that **Workload Identity + OIDC issuer** are working as expected and ready for secure pod-to-Azure access (e.g. Key Vault, Storage, Graph, etc.).
 
 ---
 
-## CI/CD – Automated AKS Deployment via GitHub Actions
+## Governance & Compliance (Azure Policy)
 
-This repository now includes a GitHub Actions workflow (`aks-deploy.yml`) that automatically deploys a sample app to the AKS cluster using OIDC authentication and `az aks command invoke`.
+Governance is expressed **as code** using modules/policy.bicep, which defines and assigns custom Azure Policy at the **subscription scope**.
 
-| Feature | Value |
+### Custom Policy Definitions
+
+| Name | Scope | Effect |
+|--------|-------|--------|
+| custom-allowed-locations | Restrict deployments to eastus2 | `deny` |
+| custom-require-standard-publicip | Audit non-Standard SKU Public IPs | `audit` |
+| custom-aks-audit-not-private | Audit AKS clusters without private API server | `audit` |
+| custom-aks-audit-no-rbac | Audit AKS clusters with RBAC disabled | `audit` |
+
+ ### Policy Assignments (Phase 2 – AKS Governance)
+
+ Assignments are created at subscription scope to enforce cluster security posture:
+
+| Assignment Name | Description |
 |--------|-------|
-| Authentication | OpenID Connect (OIDC) — no stored credentials |
-| Trigger | Manual (`workflow_dispatch`) or file changes |
-| Deployment Target | Private AKS Cluster (`spoke-app-aks`) |
-| Manifest Source | `samples/aks-basic-deploy/hello-world.yaml` |
+| asg3-allowed-locations | Deny deployments outside eastus2 |
+| asg3-require-standard-publicip | Audit Public IPs that are not Standard SKU |
+| asg3-aks-audit-not-private | Audit AKS clusters exposing a public API |
+| asg3-aks-audit-no-rbac | Audit AKS clusters without Kubernetes RBAC |
 
-### 🚀 Workflow Execution
+Assignments were validated via the ARM REST API:
+
+```powershell
+az rest --method get `
+  --url "https://management.azure.com/subscriptions/<SUB-ID>/providers/Microsoft.Authorization/policyAssignments?api-version=2022-06-01" `
+  --query "value[?starts_with(name, 'asg3-')].{name:name, scope:properties.scope, policyDefinitionId:properties.policyDefinitionId}" `
+  -o table
+```
+
+This confirms governance is:
+  - Centralized at subscription scope
+  - Version-controlled in Bicep
+  - Validated via what-if before enforcement
+
+---
+
+## Defender for Cloud & Sentinel Readiness
+
+**Defender for Cloud** is enabled for Kubernetes and integrated with the shared workspace:
+  - Plan: KubernetesService (Standard)
+  - Workspace: law-sec-ops (rg-shared-services)
+  - Connected via securityProfile.defender.logAnalyticsWorkspaceResourceId in aks.bicep
+
+This provides:
+  - Configuration assessments
+  - Threat detection for Kubernetes workloads
+  - Security recommendations surfaced via Defender and (optionally) Sentinel
+
+  The environment is **Sentinel-ready**: all necessary telemetry (AKS + Defender + Policy) is flowing into law-sec-ops, and Sentinel rules/workbooks can be layered on in a future phase.
+
+---
+
+## CI/CD – GitHub Actions
+
+This repo uses GitHub Actions with OIDC to validate and interact with the environment.
+
+### 1) Bicep Validation Workflow
+
+/.github/workflows/bicep-validate.yml:
+  - Builds all Bicep files
+  - Runs az deployment sub what-if against main.bicep
+  - Authenticates via azure/login@v2 using OIDC (no stored secrets)
+
+Example result (Run #36):
+  - **Creates 7** new resources (policy defs + assignments)
+  - **Modifies 7** existing resources (tags, firewall, Key Vault settings)
+  - **Ignores ~20** unchanged resources
+
+The workflow ensures every infra change is validated via Azure’s native what-if before deployment.
+
+### 2) AKS Sample App Deployment Workflow
+
+/.github/workflows/aks-deploy.yml deploys the hello-world app to the private AKS cluster.
+
+Key features:
+
+   - Auth via OIDC → azure/login@v2
+   - Uses az aks command invoke (works with private control plane)
+   - Applies samples/aks-basic-deploy/hello-world.yaml
+   - Verifies pods and services
+
+High-level workflow snippet:
 
 ```yaml
 name: AKS Sample App Deploy
+
+on:
+  workflow_dispatch: {}
+  push:
+    paths:
+      - 'samples/aks-basic-deploy/**'
+      - '.github/workflows/aks-deploy.yml'
+
 permissions:
-  id-token: write   # Required for OIDC → Azure
+  id-token: write
   contents: read
+
+env:
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  AZURE_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
 
 jobs:
   deploy-hello-world:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: azure/login@v2
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
         with:
           client-id:     ${{ env.AZURE_CLIENT_ID }}
           tenant-id:     ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy app
+      - name: Deploy hello-world manifest to AKS
         run: |
           az aks command invoke \
             --resource-group rg-spoke-app \
@@ -307,150 +450,23 @@ jobs:
             --file ./samples/aks-basic-deploy/hello-world.yaml
 ```
 
-### 📊 Latest Deployment Result
-
-✔ Workflow **passed successfully**  
-✔ Pod scheduled successfully  
-✔ Internal service resolution confirmed  
-✔ CNI Overlay + Cilium dataplane fully operational  
-✔ Validated without any need for kubeconfig access
-
-> _A private AKS cluster with OIDC-enabled GitHub automation is fully functional — demonstrating secure DevOps practices using cloud-native CI/CD._
+✔ The latest run confirmed:
+   - OIDC auth succeeded
+   - App manifest applied to private cluster
+   - Pods and services are reachable inside the cluster
 
 ---
 
-## Governance & Compliance (Azure Policy)
+## 🚧 Planned Enhancements
 
-Governance is applied using modular Bicep in the same way as infrastructure — ensuring policy is version-controlled, peer-reviewed, and validated with what-if before enforcement.
+ - GitOps for AKS (FluxCD or ArgoCD)
+ - Azure Monitor Container Insights + custom metrics
+ - AKS autoscaling, ingress controller, and Key Vault CSI driver
+ - Additional Azure Policy for pod security / Gatekeeper (OPA)
+ - Sentinel analytics rules and dashboards over law-sec-ops
+ - Release pipelines for staged infra changes (dev → test → prod)
 
-This infrastructure enforces foundational governance controls using **Azure Policy** at the **subscription scope** to standardize security configuration and proactively audit misaligned resources.
-
-### 🔒 Policy Controls Included
-
-| Policy | Scope | Effect |
-|--------|-------|--------|
-| ❌ Deny deployments outside approved region (`eastus2`) | All resources | `deny` |
-| 🔍 Audit missing `environment` / `owner` tags | All resources | `audit` |
-| 🔍 Audit Public IPs not using **Standard SKU** | Networking | `audit` |
-| 🔍 Audit AKS clusters without **Private API access** | Kubernetes | `audit` |
-| 🔍 Audit AKS clusters with **RBAC disabled** | Kubernetes | `audit` |
-
-📦 These policy definitions and assignments are implemented through  
-`modules/policy.bicep` and activated by using:
-
-```powershell
---parameters deployPolicies=true
-```
-
-🔄 Policy Lifecycle via IaC
-
-✔️ Policies are provisioned and assigned as part of the Bicep deployment
-✔️ Included in CI/CD validation (what-if preview)
-✔️ Can be extended using Azure Policy initiatives for Hub-Spoke landing zones
-
-🧠 Why this matters
-
-This aligns the environment with Zero Trust, Cloud Adoption Framework (CAF), and Landing Zone best practices, ensuring every deployment remains compliant regardless of contributor.
-
-📊 Validation Result
-
-Validate Azure Policy assignments
-```powershell
-az policy assignment list --query "[].{name:name, policy:policyDefinitionId}" -o table
-```
-
-(Optional) View compliance state
-```powershell
-az policy state summarize --management-group <mgmt-group-if-used> --query "results[0].nonCompliantResources"
-```
-
-Recent what-if CI/CD run confirms:
-- 7 new policy resources created
-- 7 existing resources modified to meet compliance
-- No breaking changes introduced
-
-Effectively, this project enforces governance guardrails without blocking lab deployment.
-
-### 🔐 Defender for Cloud Integration
-
-This deployment enables Microsoft Defender for Cloud to monitor Kubernetes workloads.
-
-| Setting | Value |
-|--------|-------|
-| Defender Plan | `KubernetesService` |
-| Pricing Tier | Standard |
-| Toggle | `deployDefender=true` |
-| Telemetry Workspace | `law-sec-ops` (via `securityProfile.defender.logAnalyticsWorkspaceResourceId`) |
-
-Defender continuously assesses the AKS cluster for configuration drift, exposed attack surfaces, and container security posture. Security insights are routed to the shared Log Analytics Workspace.
-
-```bicep
-module defender './modules/defender.bicep' = if (deployDefender) {
-  name: 'mod-defender-aks'
-  params: {
-    enableDefender: true
-  }
-}
-```
-
-Defender activation is fully declarative and optional via Bicep parameterization.
-
-### 🔒 AKS Governance – Subscription-Level Enforcement (Phase 2)
-
-As part of cluster security hardening, four custom Azure Policy definitions are deployed and automatically assigned via Bicep to enforce mandatory AKS security controls at subscription scope:
-
-| Policy Assignment | Effect | Description |
-|------------------|--------|-------------|
-| `asg3-allowed-locations` | Deny | Blocks deployments outside `eastus2` |
-| `asg3-require-standard-publicip` | Audit | Flags Public IPs not using Standard SKU |
-| `asg3-aks-audit-not-private` | Audit | Flags AKS clusters exposing public API server |
-| `asg3-aks-audit-no-rbac` | Audit | Flags AKS clusters without Kubernetes RBAC enabled |
-
-These policies were verified post-deployment using `az rest`, confirming active enforcement:
-```bash
-az rest --method get \
-  --url "https://management.azure.com/subscriptions/<SUB-ID>/providers/Microsoft.Authorization/policyAssignments?api-version=2022-06-01" \
-  --query "value[?starts_with(name, 'asg3-')].{name:name, scope:properties.scope, policyDefinitionId:properties.policyDefinitionId}" -o table
-```
-
-## CI/CD Integration
-
-This repository includes a GitHub Actions workflow that:
-
-- Runs syntax validation on all Bicep templates
-- Executes an automated Azure “what-if” deployment preview
-- Authenticates securely using OpenID Connect (OIDC) federation with Azure
-
-✔ GitHub Actions authenticates securely using **OIDC (no static secrets)** and enforces ARM what-if validation before any deployment.
-
-### 📘 CI/CD Validation Results
-
-The latest **automated what-if deployment** was executed via GitHub Actions using OpenID Connect authentication.
-
-✅ **Run #36** — [View Workflow Logs »](https://github.com/CamParent/iac-foundation/actions/runs/19154923538)  
-📦 **Artifact:** [Download what-if-36.zip](https://github.com/CamParent/iac-foundation/actions/runs/19154923538#artifacts)
-
-The `what-if` output confirms that the deployment would:
-- **Create 7** new resources (custom Azure Policy Definitions + Assignments)
-- **Modify 7** existing resources (resource group tagging, hub firewall, and Key Vault RBAC)
-- **Ignore 20** unchanged resources (existing networking, routes, private endpoints, etc.)
-
-**Highlights:**
-- Enforces **Allowed Locations**, **Required Tags**, and **Standard SKU Public IP** Azure Policies  
-- Adds consistent resource tagging across all resource groups  
-- Updates Azure Firewall to **AlertAndDeny** mode with refined subnets  
-- Enables **RBAC authorization** and **purge protection** in Key Vault  
-
-> _This validation was fully automated through GitHub Actions, ensuring every infrastructure change is tested through Azure’s native “what-if” before deployment._
-
-## Planned Enhancements
-
-- Integrate GitOps with Azure Kubernetes Service using FluxCD or ArgoCD
-- Enable Azure Monitor / Container Insights for cluster observability
-- Add autoscaling, ingress controller, and Azure Key Vault CSI driver
-- Configure Azure DevOps or GitHub Release workflow for cluster lifecycle
-
-This project was fully architected, developed, and tested independently as part of my Azure Infrastructure-as-Code learning path and lab-to-production validation strategy.
+---
 
 ## Author
 
