@@ -467,6 +467,46 @@ jobs:
  - Release pipelines for staged infra changes (dev → test → prod)
 
 ---
+## Sentinel Ingestion Lab
+
+This lab simulates **Windows Security Event Log ingestion** into Azure Sentinel (via Log Analytics Workspace) using:
+
+- A test VM (`sentinelvm01`) running a security event generator
+- A custom **Data Collection Rule (DCR)** configured via Bicep/CLI
+- **Azure Monitor Agent (AMA)** auto-connected to the DCR
+- Integration with **Log Analytics Workspace** (`law-sec-ops`) used by Sentinel
+
+### Deployed Components
+
+| Component | Description |
+|----------|-------------|
+| VM: `sentinelvm01` | Windows VM with event log generation script |
+| DCR: `sentinel-dcr` | Collects `Security!*` events using XPath |
+| AMA Extension | Installed and bound to VM using DCR association |
+| Workspace: `law-sec-ops` | Central telemetry store (Sentinel connected) |
+
+### How to Simulate Events
+
+1. RDP into `sentinelvm01`
+2. Run the PowerShell script:
+   ```powershell
+   .\Generate-TestSecurityEvents.ps1
+   ```
+3. Use KQL in Sentinel Logs to confirm ingestion:
+
+   ```kusto
+   SecurityEvent
+  | sort by TimeGenerated desc
+  | limit 100
+   ```
+
+### Files
+
+- sentinel/ingest-lab/ – includes ARM/Bicep templates and helper scripts
+- sentinel/analytics/ – Sentinel Analytics Rules (JSON)
+- sentinel/workbooks/ – Custom Sentinel Workbook definitions (JSON)
+
+---
 
 ## Author
 
