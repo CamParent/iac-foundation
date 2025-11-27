@@ -41,5 +41,20 @@ SecurityEvent
 Allow ~5 minutes for ingestion.
 
 ---
+## 🖼️ Architecture
+
+```mermaid
+graph LR
+  VM[Windows VM<br>sentinelvm01]
+  DCR[Data Collection Rule<br>sentinel-dcr]
+  LAW[Log Analytics Workspace<br>law-sec-ops]
+  Sentinel[Microsoft Sentinel]
+
+  VM -->|Event Logs| DCR
+  DCR -->|Security Events<br>via XPath| LAW
+  LAW -->|Analytics Rules,<br>Workbooks, etc.| Sentinel
+```
+
+---
 
 ## ✅ Next Steps
