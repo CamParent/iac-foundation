@@ -486,8 +486,8 @@ This lab simulates **Windows Security Event Log ingestion** into Azure Sentinel 
 
    ```kusto
    SecurityEvent
-  | sort by TimeGenerated desc
-  | limit 100
+    sort by TimeGenerated desc
+    limit 100
    ```
 
 ### Files
@@ -516,7 +516,7 @@ This lab simulates **Windows Security Event Log ingestion** into Azure Sentinel 
 - **Multi-Stage Infra Pipelines**:
   - GitHub Actions environments (dev → test → prod)
   - Infra promotion based on PR approval
-  
+
 ---
 
 ## Author
