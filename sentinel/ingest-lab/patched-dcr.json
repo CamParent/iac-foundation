@@ -1,0 +1,31 @@
+{
+  "location": "eastus2",
+  "properties": {
+    "description": "DCR for collecting all Security Events to Sentinel",
+    "dataSources": {
+      "windowsEventLogs": [
+        {
+          "name": "securityEvents",
+          "streams": ["Microsoft-SecurityEvent"],
+          "xPathQueries": [
+            "Security!*"
+          ]
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "name": "lawDestination",
+          "workspaceResourceId": "/subscriptions/95f5b230-2ac0-46e4-9e78-213a57b19bda/resourceGroups/rg-shared-services/providers/Microsoft.OperationalInsights/workspaces/law-sec-ops"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Microsoft-SecurityEvent"],
+        "destinations": ["lawDestination"]
+      }
+    ]
+  }
+}

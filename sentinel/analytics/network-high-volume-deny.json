@@ -1,0 +1,22 @@
+{
+  "name": "Network - High Volume Azure Firewall Deny",
+  "kind": "Scheduled",
+  "properties": {
+    "displayName": "Network - High Volume Azure Firewall Deny",
+    "description": "Detects source IPs generating a high number of denied connections through Azure Firewall in a short time frame.",
+    "enabled": false,
+    "query": "let Lookback = 1h;\nlet Threshold = 100;\nAzureDiagnostics\n| where TimeGenerated > ago(Lookback)\n| where Category == \"AzureFirewallNetworkRule\"\n| where action_s == \"D\"\n| summarize\n    DenyCount = count(),\n    DistinctPorts = dcount(dest_port_s),\n    DistinctFqdns = dcount(Fqdn_s),\n    SampleDestinations = make_set(destination_ip_s, 10)\n  by SrcIp = src_ip_s, bin(TimeGenerated, 15m)\n| where DenyCount >= Threshold\n| order by DenyCount desc",
+    "queryFrequency": "PT1H",
+    "queryPeriod": "PT1H",
+    "severity": "Medium",
+    "triggerOperator": "GreaterThan",
+    "triggerThreshold": 0,
+    "suppressionDuration": "PT1H",
+    "suppressionEnabled": false,
+    "tactics": [
+      "Reconnaissance",
+      "CommandAndControl",
+      "Exfiltration"
+    ],
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.39.26.7824",
+      "templateHash": "857593067673536520"
+    }
+  },
+  "parameters": {
+    "workspaceName": {
+      "type": "string",
+      "metadata": {
+        "description": "Name of the Log Analytics workspace that Microsoft Sentinel is enabled on (e.g. law-sec-ops)."
+      }
+    },
+    "deploySentinelAnalytics": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Whether to deploy Sentinel Scheduled Analytics Rules from the sentinel/analytics JSON templates."
+      }
+    }
+  },
+  "variables": {
+    "$fxv#0": {
+      "name": "Identity - Possible Impossible Travel",
+      "kind": "Scheduled",
+      "properties": {
+        "displayName": "Identity - Possible Impossible Travel",
+        "description": "Flags users who log in from different countries within a short time window, suggesting credential theft or session hijacking.",
+        "enabled": false,
+        "query": "let Lookback = 7d;\nlet MaxHoursBetweenCountries = 4;\nSigninLogs\n| where TimeGenerated > ago(Lookback)\n| where ResultType == 0      // Successful sign-ins only\n| project TimeGenerated,\n          UserPrincipalName,\n          IPAddress,\n          Country = tostring(LocationDetails.countryOrRegion)\n| sort by UserPrincipalName asc, TimeGenerated asc\n| extend PrevCountry = prev(Country),\n         PrevTime    = prev(TimeGenerated),\n         PrevIP      = prev(IPAddress),\n         CountryChanged = Country != PrevCountry\n| where isnotempty(PrevCountry)\n      and CountryChanged\n      and datetime_diff('hour', TimeGenerated, PrevTime) between (0 .. MaxHoursBetweenCountries)\n| summarize\n    FirstSeen = min(PrevTime),\n    LastSeen  = max(TimeGenerated),\n    Countries = make_set(Country),\n    IPs       = make_set(IPAddress),\n    PrevIPs   = make_set(PrevIP),\n    Events    = count()\n  by UserPrincipalName\n| order by LastSeen desc",
+        "queryFrequency": "PT1H",
+        "queryPeriod": "P7D",
+        "severity": "High",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "InitialAccess",
+          "CredentialAccess"
+        ]
+      }
+    },
+    "$fxv#1": {
+      "name": "Network - High Volume Azure Firewall Deny",
+      "kind": "Scheduled",
+      "properties": {
+        "displayName": "Network - High Volume Azure Firewall Deny",
+        "description": "Detects source IPs generating a high number of denied connections through Azure Firewall in a short time frame.",
+        "enabled": false,
+        "query": "let Lookback = 1h;\nlet Threshold = 100;\nAzureDiagnostics\n| where TimeGenerated > ago(Lookback)\n| where Category == \"AzureFirewallNetworkRule\"\n| where action_s == \"D\"\n| summarize\n    DenyCount = count(),\n    DistinctPorts = dcount(dest_port_s),\n    DistinctFqdns = dcount(Fqdn_s),\n    SampleDestinations = make_set(destination_ip_s, 10)\n  by SrcIp = src_ip_s, bin(TimeGenerated, 15m)\n| where DenyCount >= Threshold\n| order by DenyCount desc",
+        "queryFrequency": "PT1H",
+        "queryPeriod": "PT1H",
+        "severity": "Medium",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "Reconnaissance",
+          "CommandAndControl",
+          "Exfiltration"
+        ]
+      }
+    },
+    "$fxv#2": {
+      "name": "AKS - Pods Using Public Container Registries",
+      "kind": "Scheduled",
+      "properties": {
+        "displayName": "AKS - Pods Using Public Container Registries",
+        "description": "Lists pods running images from public registries (e.g. docker.io, ghcr.io, quay.io) instead of a private ACR. Useful for enforcing container supply chain hygiene.",
+        "enabled": false,
+        "query": "let Lookback = 1d;\nKubePodInventory\n| where TimeGenerated > ago(Lookback)\n| project TimeGenerated,\n          ClusterName,\n          Namespace,\n          PodName,\n          Image\n| where Image has \"docker.io\"\n   or Image has \"ghcr.io\"\n   or Image has \"quay.io\"\n| summarize\n    FirstSeen = min(TimeGenerated),\n    LastSeen  = max(TimeGenerated),\n    PodCount  = dcount(PodName),\n    Pods      = make_set(PodName, 50)\n  by ClusterName,\n     Namespace,\n     Image\n| order by LastSeen desc",
+        "queryFrequency": "PT1H",
+        "queryPeriod": "P1D",
+        "severity": "Medium",
+        "triggerOperator": "GreaterThan",
+        "triggerThreshold": 0,
+        "suppressionDuration": "PT1H",
+        "suppressionEnabled": false,
+        "tactics": [
+          "InitialAccess",
+          "Persistence",
+          "DefenseEvasion"
+        ]
+      }
+    },
+    "identityAlert": "[variables('$fxv#0')]",
+    "networkAlert": "[variables('$fxv#1')]",
+    "aksAlert": "[variables('$fxv#2')]"
+  },
+  "resources": [
+    {
+      "condition": "[parameters('deploySentinelAnalytics')]",
+      "type": "Microsoft.SecurityInsights/alertRules",
+      "apiVersion": "2020-01-01",
+      "scope": "[format('Microsoft.OperationalInsights/workspaces/{0}', parameters('workspaceName'))]",
+      "name": "[variables('identityAlert').name]",
+      "kind": "Scheduled",
+      "properties": "[variables('identityAlert').properties]"
+    },
+    {
+      "condition": "[parameters('deploySentinelAnalytics')]",
+      "type": "Microsoft.SecurityInsights/alertRules",
+      "apiVersion": "2020-01-01",
+      "scope": "[format('Microsoft.OperationalInsights/workspaces/{0}', parameters('workspaceName'))]",
+      "name": "[variables('networkAlert').name]",
+      "kind": "Scheduled",
+      "properties": "[variables('networkAlert').properties]"
+    },
+    {
+      "condition": "[parameters('deploySentinelAnalytics')]",
+      "type": "Microsoft.SecurityInsights/alertRules",
+      "apiVersion": "2020-01-01",
+      "scope": "[format('Microsoft.OperationalInsights/workspaces/{0}', parameters('workspaceName'))]",
+      "name": "[variables('aksAlert').name]",
+      "kind": "Scheduled",
+      "properties": "[variables('aksAlert').properties]"
+    }
+  ]
+}

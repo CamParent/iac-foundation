@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "4708989312158823901"
+      "templateHash": "1472886228210404128"
     }
   },
   "parameters": {
@@ -143,6 +143,13 @@
       "defaultValue": false,
       "metadata": {
         "description": "Deploy AKS cluster into the spoke VNet?"
+      }
+    },
+    "deployDefender": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Enable Defender for Cloud plan for AKS (KubernetesService)."
       }
     },
     "aksAdminGroupObjectIds": {
@@ -682,6 +689,61 @@
       ]
     },
     {
+      "condition": "[parameters('deployDefender')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "mod-defender-aks",
+      "location": "[deployment().location]",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "enableDefender": {
+            "value": true
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.39.26.7824",
+              "templateHash": "7297462845272604498"
+            }
+          },
+          "parameters": {
+            "enableDefender": {
+              "type": "bool",
+              "defaultValue": true,
+              "metadata": {
+                "description": "Enable Defender for Cloud plan for AKS (KubernetesService)."
+              }
+            }
+          },
+          "resources": [
+            {
+              "condition": "[parameters('enableDefender')]",
+              "type": "Microsoft.Security/pricings",
+              "apiVersion": "2023-01-01",
+              "name": "KubernetesService",
+              "properties": {
+                "pricingTier": "Standard"
+              }
+            }
+          ],
+          "outputs": {
+            "defenderEnabled": {
+              "type": "bool",
+              "value": "[parameters('enableDefender')]"
+            }
+          }
+        }
+      }
+    },
+    {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "mod-spoke-networking",
@@ -1079,7 +1141,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.39.26.7824",
-              "templateHash": "13574715368004918838"
+              "templateHash": "7614236170129442672"
             }
           },
           "parameters": {
@@ -1150,7 +1212,13 @@
                     "securityMonitoring": {
                       "enabled": true
                     }
+                  },
+                  "workloadIdentity": {
+                    "enabled": true
                   }
+                },
+                "oidcIssuerProfile": {
+                  "enabled": true
                 },
                 "aadProfile": {
                   "managed": true,
@@ -1185,6 +1253,50 @@
                   }
                 ]
               }
+            },
+            {
+              "type": "Microsoft.Insights/diagnosticSettings",
+              "apiVersion": "2021-05-01-preview",
+              "scope": "[format('Microsoft.ContainerService/managedClusters/{0}', parameters('aksName'))]",
+              "name": "aks-to-law-sec-ops",
+              "properties": {
+                "workspaceId": "[parameters('logAnalyticsWorkspaceId')]",
+                "logs": [
+                  {
+                    "category": "kube-apiserver",
+                    "enabled": true
+                  },
+                  {
+                    "category": "kube-controller-manager",
+                    "enabled": true
+                  },
+                  {
+                    "category": "kube-scheduler",
+                    "enabled": true
+                  },
+                  {
+                    "category": "cluster-autoscaler",
+                    "enabled": true
+                  },
+                  {
+                    "category": "kube-audit",
+                    "enabled": true
+                  },
+                  {
+                    "category": "kube-audit-admin",
+                    "enabled": true
+                  }
+                ],
+                "metrics": [
+                  {
+                    "category": "AllMetrics",
+                    "enabled": true
+                  }
+                ]
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.ContainerService/managedClusters', parameters('aksName'))]"
+              ]
             }
           ],
           "outputs": {

@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: wi-demo
+  labels:
+    azure.workload.identity/use: "true"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: wi-demo-sa
+  namespace: wi-demo
+  annotations:
+    azure.workload.identity/client-id: "7c8d491a-a12a-4e7d-a740-65073983ac22"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wi-demo-app
+  namespace: wi-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wi-demo-app
+  template:
+    metadata:
+      labels:
+        app: wi-demo-app
+        azure.workload.identity/use: "true"
+    spec:
+      serviceAccountName: wi-demo-sa
+      containers:
+        - name: wi-demo
+          image: busybox:latest
+          command: ["sh", "-c", "sleep 3600"]

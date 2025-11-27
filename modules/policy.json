@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.39.26.7824",
-      "templateHash": "2657578506137923653"
+      "templateHash": "10681231365203610467"
     }
   },
   "parameters": {
@@ -147,7 +147,7 @@
     {
       "type": "Microsoft.Authorization/policyAssignments",
       "apiVersion": "2022-06-01",
-      "name": "asg-allowed-locations",
+      "name": "asg3-allowed-locations",
       "properties": {
         "displayName": "Allowed locations (subscription)",
         "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-allowed-locations')]",
@@ -160,7 +160,7 @@
     {
       "type": "Microsoft.Authorization/policyAssignments",
       "apiVersion": "2022-06-01",
-      "name": "asg-require-standard-publicip",
+      "name": "asg3-require-standard-publicip",
       "properties": {
         "displayName": "Public IPs must be Standard SKU",
         "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-require-standard-publicip')]",
@@ -173,7 +173,7 @@
     {
       "type": "Microsoft.Authorization/policyAssignments",
       "apiVersion": "2022-06-01",
-      "name": "asg-aks-audit-not-private",
+      "name": "asg3-aks-audit-not-private",
       "properties": {
         "displayName": "AKS clusters should use private API server",
         "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-aks-audit-not-private')]",
@@ -186,7 +186,7 @@
     {
       "type": "Microsoft.Authorization/policyAssignments",
       "apiVersion": "2022-06-01",
-      "name": "asg-aks-audit-no-rbac",
+      "name": "asg3-aks-audit-no-rbac",
       "properties": {
         "displayName": "AKS clusters should have Kubernetes RBAC enabled",
         "policyDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/policyDefinitions', 'custom-aks-audit-no-rbac')]",

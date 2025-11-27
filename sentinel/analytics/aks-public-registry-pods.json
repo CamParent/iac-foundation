@@ -1,0 +1,22 @@
+{
+  "name": "AKS - Pods Using Public Container Registries",
+  "kind": "Scheduled",
+  "properties": {
+    "displayName": "AKS - Pods Using Public Container Registries",
+    "description": "Lists pods running images from public registries (e.g. docker.io, ghcr.io, quay.io) instead of a private ACR. Useful for enforcing container supply chain hygiene.",
+    "enabled": false,
+    "query": "let Lookback = 1d;\nKubePodInventory\n| where TimeGenerated > ago(Lookback)\n| project TimeGenerated,\n          ClusterName,\n          Namespace,\n          PodName,\n          Image\n| where Image has \"docker.io\"\n   or Image has \"ghcr.io\"\n   or Image has \"quay.io\"\n| summarize\n    FirstSeen = min(TimeGenerated),\n    LastSeen  = max(TimeGenerated),\n    PodCount  = dcount(PodName),\n    Pods      = make_set(PodName, 50)\n  by ClusterName,\n     Namespace,\n     Image\n| order by LastSeen desc",
+    "queryFrequency": "PT1H",
+    "queryPeriod": "P1D",
+    "severity": "Medium",
+    "triggerOperator": "GreaterThan",
+    "triggerThreshold": 0,
+    "suppressionDuration": "PT1H",
+    "suppressionEnabled": false,
+    "tactics": [
+      "InitialAccess",
+      "Persistence",
+      "DefenseEvasion"
+    ],
+  }
+}

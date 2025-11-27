@@ -41,7 +41,7 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       }
     }
 
-    // Defender + Log Analytics workspace hookup
+    // Defender + Log Analytics + Workload Identity
     securityProfile: {
       defender: {
         logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceId
@@ -49,6 +49,14 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
           enabled: true
         }
       }
+      workloadIdentity: {
+        enabled: true
+      }
+    }
+
+    // Enable OIDC issuer to support workload identity
+    oidcIssuerProfile: {
+      enabled: true
     }
 
     // Entra ID (AAD) integration with Azure RBAC
@@ -91,6 +99,49 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
         enableAutoScaling: true
         minCount: 1
         maxCount: 1
+      }
+    ]
+  }
+}
+
+// Diagnostic settings: send AKS control-plane logs + metrics to Log Analytics (law-sec-ops)
+resource aksDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
+  name: 'aks-to-law-sec-ops'
+  scope: aks
+  properties: {
+    workspaceId: logAnalyticsWorkspaceId
+
+    logs: [
+      {
+        category: 'kube-apiserver'
+        enabled: true
+      }
+      {
+        category: 'kube-controller-manager'
+        enabled: true
+      }
+      {
+        category: 'kube-scheduler'
+        enabled: true
+      }
+      {
+        category: 'cluster-autoscaler'
+        enabled: true
+      }
+      {
+        category: 'kube-audit'
+        enabled: true
+      }
+      {
+        category: 'kube-audit-admin'
+        enabled: true
+      }
+    ]
+
+    metrics: [
+      {
+        category: 'AllMetrics'
+        enabled: true
       }
     ]
   }

@@ -143,8 +143,8 @@ resource defAksRbacEnabled 'Microsoft.Authorization/policyDefinitions@2021-06-01
 //
 
 // Allowed locations assignment
-resource asgAllowedLocations 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
-  name: 'asg-allowed-locations'
+resource asg3AllowedLocations 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
+  name: 'asg3-allowed-locations'
   properties: {
     displayName: 'Allowed locations (subscription)'
     policyDefinitionId: defAllowedLocations.id
@@ -153,8 +153,8 @@ resource asgAllowedLocations 'Microsoft.Authorization/policyAssignments@2022-06-
 }
 
 // Require Standard SKU Public IPs
-resource asgRequireStdPip 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
-  name: 'asg-require-standard-publicip'
+resource asg3RequireStdPip 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
+  name: 'asg3-require-standard-publicip'
   properties: {
     displayName: 'Public IPs must be Standard SKU'
     policyDefinitionId: defRequireStdPip.id
@@ -163,8 +163,8 @@ resource asgRequireStdPip 'Microsoft.Authorization/policyAssignments@2022-06-01'
 }
 
 // AKS: Private API server audit
-resource asgAksPrivateCluster 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
-  name: 'asg-aks-audit-not-private'
+resource asg3AksPrivateCluster 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
+  name: 'asg3-aks-audit-not-private'
   properties: {
     displayName: 'AKS clusters should use private API server'
     policyDefinitionId: defAksPrivateCluster.id
@@ -173,8 +173,8 @@ resource asgAksPrivateCluster 'Microsoft.Authorization/policyAssignments@2022-06
 }
 
 // AKS: RBAC audit
-resource asgAksRbacEnabled 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
-  name: 'asg-aks-audit-no-rbac'
+resource asg3AksRbacEnabled 'Microsoft.Authorization/policyAssignments@2022-06-01' = {
+  name: 'asg3-aks-audit-no-rbac'
   properties: {
     displayName: 'AKS clusters should have Kubernetes RBAC enabled'
     policyDefinitionId: defAksRbacEnabled.id

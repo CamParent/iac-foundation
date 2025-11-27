@@ -67,8 +67,17 @@ param deployPolicies bool = false
 @description('Deploy AKS cluster into the spoke VNet?')
 param deployAks bool = false
 
+@description('Enable Defender for Cloud plan for AKS (KubernetesService).')
+param deployDefender bool = true
+
 @description('Azure AD group object IDs to grant AKS admin access.')
 param aksAdminGroupObjectIds array = []
+
+@description('Deploy Microsoft Sentinel analytics rules (Detection-as-Code) to the law-sec-ops workspace.')
+param deploySentinelAnalytics bool = false
+
+@description('Deploy Sentinel SOC workbook into the shared resource group?')
+param deploySentinelWorkbook bool = true
 
 // ---------------------------
 // Resource Groups (idempotent)
@@ -155,7 +164,17 @@ module logAnalytics './modules/loganalytics.bicep' = {
 }
 
 // =====================================================
-// 5) SPOKE NETWORK
+// 5) DEFENDER FOR CLOUD (AKS plan - subscription scope)
+// =====================================================
+module defender './modules/defender.bicep' = if (deployDefender) {
+  name: 'mod-defender-aks'
+  params: {
+    enableDefender: true
+  }
+}
+
+// =====================================================
+// 6) SPOKE NETWORK
 //    outputs: vnetId, appSubnetId, vnetName
 // =====================================================
 module spoke './modules/spoke-networking.bicep' = {
@@ -172,7 +191,7 @@ module spoke './modules/spoke-networking.bicep' = {
 }
 
 // =====================================================
-// 6) HUB ↔ SPOKE PEERING (call RG-scoped module twice)
+// 7) HUB ↔ SPOKE PEERING (call RG-scoped module twice)
 // =====================================================
 
 // Hub ➜ Spoke
@@ -204,7 +223,7 @@ module spokeToHub './modules/peering.bicep' = {
 }
 
 // =====================================================
-// 7) AKS CLUSTER (optional)
+// 8) AKS CLUSTER (optional)
 //    Deploys a private AKS cluster into the spoke VNet
 // =====================================================
 module aks './modules/aks.bicep' = if (deployAks) {
@@ -221,14 +240,38 @@ module aks './modules/aks.bicep' = if (deployAks) {
 }
 
 // =====================================================
-// 8)Policy
+// 9)Policy
 // =====================================================
-
 module policies './modules/policy.bicep' = if (deployPolicies) {
   name: 'mod-policies'
   scope: subscription()
   params: {
     allowedLocations: [ location ]           // e.g., 'eastus2'
+  }
+}
+
+// =====================================================
+// 10) SENTINEL ANALYTICS (Detection-as-Code)
+//     Deploys Scheduled Analytics Rules against law-sec-ops
+// =====================================================
+module sentinelAnalytics './sentinel/analytics.bicep' = if (deploySentinelAnalytics) {
+  name: 'mod-sentinel-analytics'
+  scope: rgShared
+  params: {
+    workspaceName: logAnalytics.outputs.logAnalyticsWorkspaceName
+  }
+}
+
+// =====================================================
+// 11) SENTINEL WORKBOOK: SOC Detection Summary
+// =====================================================
+module sentinelWorkbook './sentinel/workbook.bicep' = if (deploySentinelWorkbook) {
+  name: 'mod-soc-workbook'
+  scope: rgShared
+  params: {
+    workbookDisplayName: 'SOC Detection Summary'
+    workbookDefinitionFile: loadTextContent('sentinel/workbooks/soc-detection-summary.workbook.json')
+    sourceId: logAnalytics.outputs.logAnalyticsWorkspaceId
   }
 }
 

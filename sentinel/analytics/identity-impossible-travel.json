@@ -1,0 +1,21 @@
+{
+  "name": "Identity - Possible Impossible Travel",
+  "kind": "Scheduled",
+  "properties": {
+    "displayName": "Identity - Possible Impossible Travel",
+    "description": "Flags users who log in from different countries within a short time window, suggesting credential theft or session hijacking.",
+    "enabled": false,
+    "query": "let Lookback = 7d;\nlet MaxHoursBetweenCountries = 4;\nSigninLogs\n| where TimeGenerated > ago(Lookback)\n| where ResultType == 0      // Successful sign-ins only\n| project TimeGenerated,\n          UserPrincipalName,\n          IPAddress,\n          Country = tostring(LocationDetails.countryOrRegion)\n| sort by UserPrincipalName asc, TimeGenerated asc\n| extend PrevCountry = prev(Country),\n         PrevTime    = prev(TimeGenerated),\n         PrevIP      = prev(IPAddress),\n         CountryChanged = Country != PrevCountry\n| where isnotempty(PrevCountry)\n      and CountryChanged\n      and datetime_diff('hour', TimeGenerated, PrevTime) between (0 .. MaxHoursBetweenCountries)\n| summarize\n    FirstSeen = min(PrevTime),\n    LastSeen  = max(TimeGenerated),\n    Countries = make_set(Country),\n    IPs       = make_set(IPAddress),\n    PrevIPs   = make_set(PrevIP),\n    Events    = count()\n  by UserPrincipalName\n| order by LastSeen desc",
+    "queryFrequency": "PT1H",
+    "queryPeriod": "P7D",
+    "severity": "High",
+    "triggerOperator": "GreaterThan",
+    "triggerThreshold": 0,
+    "suppressionDuration": "PT1H",
+    "suppressionEnabled": false,
+    "tactics": [
+      "InitialAccess",
+      "CredentialAccess"
+    ],
+  }
+}
