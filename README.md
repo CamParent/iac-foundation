@@ -457,16 +457,6 @@ jobs:
 
 ---
 
-## 🚧 Planned Enhancements
-
- - GitOps for AKS (FluxCD or ArgoCD)
- - Azure Monitor Container Insights + custom metrics
- - AKS autoscaling, ingress controller, and Key Vault CSI driver
- - Additional Azure Policy for pod security / Gatekeeper (OPA)
- - Sentinel analytics rules and dashboards over law-sec-ops
- - Release pipelines for staged infra changes (dev → test → prod)
-
----
 ## Sentinel Ingestion Lab
 
 This lab simulates **Windows Security Event Log ingestion** into Azure Sentinel (via Log Analytics Workspace) using:
@@ -506,6 +496,27 @@ This lab simulates **Windows Security Event Log ingestion** into Azure Sentinel 
 - sentinel/analytics/ – Sentinel Analytics Rules (JSON)
 - sentinel/workbooks/ – Custom Sentinel Workbook definitions (JSON)
 
+---
+
+## 🚧 Planned Enhancements
+
+- **GitOps for AKS** using FluxCD or ArgoCD (declarative app + infra sync)
+- **Azure Monitor Container Insights** with custom metrics and dashboards
+- **AKS Scaling & Integrations**:
+  - Cluster autoscaler
+  - NGINX or AGIC ingress controller
+  - Key Vault CSI driver for secret mounting
+- **Expanded Governance** via Azure Policy:
+  - Pod security baseline (baseline/restricted)
+  - OPA Gatekeeper integration
+- **Microsoft Sentinel**:
+  - Custom analytics rules (KQL)
+  - Alert rule groups and incident enrichment
+  - Dashboards over `law-sec-ops`
+- **Multi-Stage Infra Pipelines**:
+  - GitHub Actions environments (dev → test → prod)
+  - Infra promotion based on PR approval
+  
 ---
 
 ## Author
