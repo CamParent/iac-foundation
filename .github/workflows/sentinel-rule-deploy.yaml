@@ -33,17 +33,17 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Sentinel Analytics Rules
+      - name: Deploy Sentinel Rules
         run: |
           for file in ./sentinel/analytics/*.json; do
-            RULE_ID=$(basename "$file" .json)
-            echo "Deploying $RULE_ID from $file"
+            RULE_ID=$(jq -r '.name' "$file")
+            echo "Deploying $file"
 
-            az monitor scheduled-query create \
-              --name "$RULE_ID" \
-              --resource-group $RESOURCE_GROUP \
-              --workspace-name $WORKSPACE_NAME \
+            az monitor sentinel alert-rule create \
+              --workspace-name "$WORKSPACE_NAME" \
+              --resource-group "$RESOURCE_GROUP" \
+              --rule-id "$RULE_ID" \
               --location eastus2 \
-              --description "Deployed via GitHub Actions" \
-              --rule-file "$file"
+              --kind Scheduled \
+              --alert-rule "@$file"
           done
