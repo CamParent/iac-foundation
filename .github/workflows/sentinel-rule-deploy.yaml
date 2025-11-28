@@ -23,17 +23,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Enable CLI Preview Features
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          az extension add --name monitor-control-service --yes || echo "Extension already exists"
+
       - name: Azure Login with OIDC
         uses: azure/login@v2
         with:
           client-id: ${{ env.AZURE_CLIENT_ID }}
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Enable Sentinel Extension (Preview)
-        run: |
-          az config set extension.use_dynamic_install=yes_without_prompt
-          az extension add --name sentinel --allow-preview || echo "Extension already installed"
 
       - name: Deploy Sentinel Rules
         run: |
