@@ -30,14 +30,19 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Enable Sentinel Extension (Preview)
+        run: |
+          az config set extension.use_dynamic_install=yes_without_prompt
+          az extension add --name sentinel --allow-preview || echo "Extension already installed"
+
       - name: Deploy Sentinel Rules
         run: |
           for file in ./sentinel/analytics/*.json; do
             echo "Deploying $file"
-            ruleName=$(basename "$file" .json)
-            az sentinel alert-rule create \
-              --resource-group "$RESOURCE_GROUP" \
-              --workspace-name "$WORKSPACE_NAME" \
-              --rule-id "$ruleName" \
-              --rule file://$file
+            az monitor sentinel alert-rule create \
+              --workspace-name $WORKSPACE_NAME \
+              --resource-group $RESOURCE_GROUP \
+              --rule-id "$(basename "$file" .json)" \
+              --location eastus2 \
+              --body @"$file"
           done
