@@ -23,10 +23,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Enable CLI Preview Features
-        run: |
-          az config set extension.use_dynamic_install=yes_without_prompt
-          az extension add --name monitor-control-service --yes || echo "Extension already exists"
+      - name: Enable CLI Dynamic Extension Install
+        run: az config set extension.use_dynamic_install=yes_without_prompt
 
       - name: Azure Login with OIDC
         uses: azure/login@v2
@@ -35,14 +33,17 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Sentinel Rules
+      - name: Deploy Sentinel Analytics Rules
         run: |
           for file in ./sentinel/analytics/*.json; do
-            echo "Deploying $file"
-            az monitor sentinel alert-rule create \
-              --workspace-name $WORKSPACE_NAME \
+            RULE_ID=$(basename "$file" .json)
+            echo "Deploying $RULE_ID from $file"
+
+            az monitor scheduled-query create \
+              --name "$RULE_ID" \
               --resource-group $RESOURCE_GROUP \
-              --rule-id "$(basename "$file" .json)" \
+              --workspace-name $WORKSPACE_NAME \
               --location eastus2 \
-              --body @"$file"
+              --description "Deployed via GitHub Actions" \
+              --rule-file "$file"
           done
