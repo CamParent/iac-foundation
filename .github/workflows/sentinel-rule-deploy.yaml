@@ -23,8 +23,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Enable CLI Dynamic Extension Install
-        run: az config set extension.use_dynamic_install=yes_without_prompt
+      - name: Validate Sentinel Rule JSON Files
+        run: |
+          for file in ./sentinel/analytics/*.json; do
+            echo "Validating $file"
+            jq empty "$file"
+          done
 
       - name: Azure Login with OIDC
         uses: azure/login@v2
