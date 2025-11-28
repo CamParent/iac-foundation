@@ -16,6 +16,6 @@
     "tactics": [
       "InitialAccess",
       "CredentialAccess"
-    ],
+    ]
   }
 }
