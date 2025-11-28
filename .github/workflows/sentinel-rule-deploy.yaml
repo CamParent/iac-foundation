@@ -45,5 +45,5 @@ jobs:
               --rule-id "$RULE_ID" \
               --location eastus2 \
               --kind Scheduled \
-              --body "@$file"
+              --body @"$file"
           done
