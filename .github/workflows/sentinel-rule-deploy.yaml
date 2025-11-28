@@ -33,21 +33,14 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Install Sentinel CLI Extension
-        run: |
-          az extension add --name sentinel --yes
-
-      - name: Deploy Sentinel Rules
+      - name: Deploy Sentinel Rules via REST
         run: |
           for file in ./sentinel/analytics/*.json; do
             RULE_ID=$(jq -r '.name' "$file")
-            echo "Deploying $file"
+            echo "Deploying $file as $RULE_ID"
 
-            az monitor sentinel alert-rule create \
-              --workspace-name "$WORKSPACE_NAME" \
-              --resource-group "$RESOURCE_GROUP" \
-              --rule-id "$RULE_ID" \
-              --location eastus2 \
-              --kind Scheduled \
+            az rest \
+              --method PUT \
+              --uri "https://management.azure.com/subscriptions/${{ env.AZURE_SUBSCRIPTION_ID }}/resourceGroups/${{ env.RESOURCE_GROUP }}/providers/Microsoft.OperationalInsights/workspaces/${{ env.WORKSPACE_NAME }}/providers/Microsoft.SecurityInsights/alertRules/$RULE_ID?api-version=2023-02-01-preview" \
               --body @"$file"
           done
