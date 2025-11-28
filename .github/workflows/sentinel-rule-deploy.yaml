@@ -33,6 +33,10 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
+      - name: Install Sentinel CLI Extension
+        run: |
+          az extension add --name sentinel --yes
+
       - name: Deploy Sentinel Rules
         run: |
           for file in ./sentinel/analytics/*.json; do
