@@ -30,6 +30,28 @@ jobs:
             jq empty "$file"
           done
 
+      - name: Validate Sentinel Rule Tags
+        run: |
+          for file in ./sentinel/analytics/*.json; do
+            echo "Checking tags in $file"
+            TAGS=$(jq '.tags' "$file")
+
+            if [ "$TAGS" = "null" ]; then
+              echo "❌ Missing tags in $file"
+              exit 1
+            fi
+
+            REQUIRED_KEYS=("Environment" "Owner" "Project" "DeployedBy")
+            for key in "${REQUIRED_KEYS[@]}"; do
+              if ! echo "$TAGS" | jq -e "has(\"$key\")" > /dev/null; then
+                echo "❌ Missing tag '$key' in $file"
+                exit 1
+              fi
+            done
+
+            echo "✅ Tags OK in $file"
+          done
+
       - name: Azure Login with OIDC
         uses: azure/login@v2
         with:
