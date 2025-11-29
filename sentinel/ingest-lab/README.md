@@ -1,36 +1,38 @@
-# Sentinel Log Ingestion Lab
+# Microsoft Sentinel Log Ingestion Lab
 
-This subproject simulates and verifies ingestion of Windows Security Events (e.g., Event ID 4625) into Azure Sentinel via the Azure Monitor Agent and a Data Collection Rule (DCR).
+This lab simulates and validates the ingestion of **Windows Security Event Logs** into Microsoft Sentinel via **Azure Monitor Agent (AMA)** and a **Data Collection Rule (DCR)**, with automated rule deployment through **GitHub Actions**.
 
-## 💼 Skills Demonstrated
-
-- Azure Monitor Agent setup
-- Data Collection Rule configuration (DCR)
-- Log Analytics + Sentinel integration
-- Kusto Query Language (KQL) usage
-- SecurityEvent log simulation
+## 🎯 Skills Demonstrated
+- Azure Monitor Agent installation and configuration
+- Data Collection Rule (DCR) authoring and VM association
+- Log Analytics Workspace (LAW) integration
+- Microsoft Sentinel readiness and alert rule deployment
+- Event simulation + validation with **Kusto Query Language (KQL)**
+- CI/CD for analytics rules with validation + tagging
 
 ## 🧱 Prerequisites
+Before deploying, ensure:
+- A test VM named sentinelvm01 exists in resource group rg-sec-test
+- A Log Analytics Workspace named law-sec-ops is deployed
+- Azure CLI is installed and authenticated
+- You have Contributor permissions on the target resource group
 
-- Existing VM: `sentinelvm01` in `rg-sec-test`
-- Log Analytics Workspace: `law-sec-ops` (ID already embedded in `patched-dcr.json`)
-- Azure CLI installed
-- Contributor access to resource group
-
-## 🚀 Deploy and Connect Agent
+## 🚀 Deploy AMA + DCR via Script
+This command installs AMA, configures a DCR, and associates it with the VM:
 
 ```powershell
 cd .\sentinel\ingest-lab\
 .\deploy.ps1
 ```
 
-## 🧪 Simulate Logs (Event ID 4625)
+## 🧪 Simulate Security Events (4625)
+To generate test security events on the VM:
 
 ```powershell
 .\simulate-events.ps1
 ```
 
-Expected to appear in Sentinel > Logs using:
+Ingested logs can be queried in Sentinel > Logs using:
 
 ```kusto
 SecurityEvent
@@ -41,7 +43,8 @@ SecurityEvent
 Allow ~5 minutes for ingestion.
 
 ---
-## 🖼️ Architecture
+
+## 🖼️ Architecture Diagram
 
 ```mermaid
 graph LR
@@ -59,19 +62,17 @@ graph LR
 
 ## 🔄 Sentinel Automation via GitHub Actions
 
-This project now supports automated deployment of Sentinel analytics rules using GitHub Actions. Each .json rule file in sentinel/analytics/ is:
-- ✅ Validated for proper JSON structure
-- 🏷️ Checked for required metadata tags (Environment, Owner, Project, DeployedBy)
-- 🚀 Deployed to Microsoft Sentinel via the Azure REST API
+Analytics rules under sentinel/analytics/ are validated and deployed via a GitHub Actions workflow (sentinel-rule-deploy.yaml):
 
-### 💼 GitHub Workflow Highlights
-- Trigger: Runs on push to sentinel/analytics/** or manual trigger via GitHub UI
-- Security: Uses [OIDC-based Azure login](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-cli%2Clinux) (no secrets needed)
-- Validation: Fails early if required tags are missing from any rule
-- Deployment: Pushes alert rules directly to Sentinel via az rest using the Microsoft.SecurityInsights resource provider
+### ✅ Workflow Capabilities
+- **Trigger**: On push to sentinel/analytics/** or manual dispatch
+- **Security**: Azure login via OIDC (no secrets stored)
+- **Validation**: Ensures JSON syntax + required tags
+- **Deployment**: Uses az rest with the Sentinel ARM API
 
-### 📂 Required Tags in Each Rule JSON
-Each rule must include a tags block like this:
+### 🏷️ Required Tags for Each Rule
+
+Each .json analytics rule must contain a tags block:
 
 ```json
 "tags": {
@@ -81,9 +82,24 @@ Each rule must include a tags block like this:
   "DeployedBy": "GitHubActions"
 }
 ```
+Missing tags cause the pipeline to fail — ensuring traceability and compliance.
 
-This ensures consistent rule ownership and traceability across deployments.
+## 📂 File Structure
 
+```text
+sentinel/ingest-lab/
+├── deploy.ps1                # Installs AMA + connects DCR
+├── simulate-events.ps1       # Generates test security events (4625)
+├── patched-dcr.json          # DCR definition wired to LAW
+└── README.md                 # This file
+```
+Related folders:
+  - sentinel/analytics/ — Alert rules deployed via CI/CD
+  - sentinel/workbooks/ — Custom Sentinel workbook templates (optional)
 ---
 
 ## ✅ Next Steps
+  - Create custom analytics rules under sentinel/analytics/
+  - Confirm logs appear in Sentinel via SecurityEvent queries
+  - Expand detection scenarios (e.g. impossible travel, brute force, etc.)
+  - Integrate with dashboards or automated incident response
