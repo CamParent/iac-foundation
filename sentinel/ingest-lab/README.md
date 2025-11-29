@@ -57,4 +57,33 @@ graph LR
 
 ---
 
+## 🔄 Sentinel Automation via GitHub Actions
+
+This project now supports automated deployment of Sentinel analytics rules using GitHub Actions. Each .json rule file in sentinel/analytics/ is:
+- ✅ Validated for proper JSON structure
+- 🏷️ Checked for required metadata tags (Environment, Owner, Project, DeployedBy)
+- 🚀 Deployed to Microsoft Sentinel via the Azure REST API
+
+### 💼 GitHub Workflow Highlights
+- Trigger: Runs on push to sentinel/analytics/** or manual trigger via GitHub UI
+- Security: Uses [OIDC-based Azure login](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-cli%2Clinux) (no secrets needed)
+- Validation: Fails early if required tags are missing from any rule
+- Deployment: Pushes alert rules directly to Sentinel via az rest using the Microsoft.SecurityInsights resource provider
+
+### 📂 Required Tags in Each Rule JSON
+Each rule must include a tags block like this:
+
+```json
+"tags": {
+  "Environment": "Dev",
+  "Owner": "security-team@example.com",
+  "Project": "iac-foundation",
+  "DeployedBy": "GitHubActions"
+}
+```
+
+This ensures consistent rule ownership and traceability across deployments.
+
+---
+
 ## ✅ Next Steps

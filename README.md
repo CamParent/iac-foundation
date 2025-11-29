@@ -498,6 +498,16 @@ This lab simulates **Windows Security Event Log ingestion** into Azure Sentinel 
 
 ---
 
+## 🔄 Sentinel Automation (GitHub Actions)
+
+- Validates and deploys Sentinel analytics rules in `sentinel/analytics/`
+- Enforces tagging and schema checks before deployment
+- Uses OIDC-based Azure login — no secrets stored
+
+📂 See [`sentinel/ingest-lab`](./sentinel/ingest-lab/) for setup and automation details
+
+---
+
 ## 🚧 Planned Enhancements
 
 - **GitOps for AKS** using FluxCD or ArgoCD (declarative app + infra sync)
