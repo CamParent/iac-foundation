@@ -1,4 +1,4 @@
-name: Bicep Validation
+name: Deploy Azure Infrastructure (Bicep)
 
 on:
   push:
@@ -8,33 +8,28 @@ on:
   workflow_dispatch:
     inputs:
       location:
-        description: Azure region
+        description: Azure region to deploy resources
         required: true
         type: choice
         options: [eastus2, centralus, westus3]
         default: eastus2
       deployPolicies:
-        description: Include Policy-as-Code in what-if?
+        description: Include Policy-as-Code module
         required: true
         type: boolean
         default: true
 
-# Required repo secrets:
-# - AZURE_CLIENT_ID        (App registration / service principal client ID)
-# - AZURE_TENANT_ID        (AAD tenant ID)
-# - AZURE_SUBSCRIPTION_ID  (target subscription)
+permissions:
+  id-token: write
+  contents: read
 
 env:
   AZ_LOCATION: ${{ inputs.location || 'eastus2' }}
   PARAMS: namePrefixHub=hub namePrefixSpoke=spoke-app deployPolicies=${{ inputs.deployPolicies || false }}
 
 jobs:
-  validate:
+  deploy:
     runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write
-      contents: read
 
     steps:
       - name: Checkout
@@ -46,37 +41,44 @@ jobs:
           test -n "${{ secrets.AZURE_TENANT_ID }}" || (echo "Missing AZURE_TENANT_ID" && exit 1)
           test -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" || (echo "Missing AZURE_SUBSCRIPTION_ID" && exit 1)
 
-      # OIDC login to Azure
-      - name: Azure login
+      - name: Azure Login via OIDC
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Show Azure context
+      - name: Show Azure Context
         run: |
-          az account show -o table || true
+          az account show -o table
           az version
 
-      - name: Ensure Bicep
+      - name: Ensure Bicep is Installed
         run: |
           az bicep install || true
           az bicep upgrade
 
-      - name: Bicep syntax check
+      - name: Bicep Build Check (Syntax)
         run: az bicep build --file main.bicep
 
-      - name: What-if (subscription)
+      - name: Run What-If Deployment
         run: |
-          set -e
           az deployment sub what-if \
             --location "$AZ_LOCATION" \
             --template-file ./main.bicep \
-            --parameters $PARAMS | tee what-if.txt
+            --parameters $PARAMS \
+            --name whatif-${{ github.run_number }} | tee what-if.txt
 
-      - name: Upload what-if artifact
+      - name: Upload What-If Report
         uses: actions/upload-artifact@v4
         with:
           name: what-if-${{ github.run_number }}
           path: what-if.txt
+
+      - name: Deploy Bicep to Subscription
+        run: |
+          az deployment sub create \
+            --location "$AZ_LOCATION" \
+            --template-file ./main.bicep \
+            --parameters $PARAMS \
+            --name deploy-${{ github.run_number }}
