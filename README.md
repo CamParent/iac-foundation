@@ -1,5 +1,5 @@
 # Azure IaC Foundation — Modular Hub-Spoke Deployment Framework
-[![Bicep Validation](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/bicep-validate.yml)
+[![Deploy Bicep](https://github.com/CamParent/iac-foundation/actions/workflows/deploy.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/deploy.yml)
 [![AKS Deploy](https://github.com/CamParent/iac-foundation/actions/workflows/aks-deploy.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/aks-deploy.yml)
 [![Sentinel Rules](https://github.com/CamParent/iac-foundation/actions/workflows/sentinel-rule-deploy.yaml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/sentinel-rule-deploy.yaml)
 
