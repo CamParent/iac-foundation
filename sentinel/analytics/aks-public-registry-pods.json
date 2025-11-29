@@ -1,6 +1,12 @@
 {
   "name": "AKS - Pods Using Public Container Registries",
   "kind": "Scheduled",
+  "tags": {
+    "Environment": "Prod",
+    "Owner": "Cameron",
+    "Project": "IAC-Foundation",
+    "DeployedBy": "GitHubActions"
+  },
   "properties": {
     "displayName": "AKS - Pods Using Public Container Registries",
     "description": "Lists pods running images from public registries (e.g. docker.io, ghcr.io, quay.io) instead of a private ACR. Useful for enforcing container supply chain hygiene.",

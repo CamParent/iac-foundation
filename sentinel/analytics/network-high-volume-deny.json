@@ -1,6 +1,12 @@
 {
   "name": "Network - High Volume Azure Firewall Deny",
   "kind": "Scheduled",
+  "tags": {
+    "Environment": "Prod",
+    "Owner": "Cameron",
+    "Project": "IAC-Foundation",
+    "DeployedBy": "GitHubActions"
+  },
   "properties": {
     "displayName": "Network - High Volume Azure Firewall Deny",
     "description": "Detects source IPs generating a high number of denied connections through Azure Firewall in a short time frame.",
