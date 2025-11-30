@@ -1,4 +1,4 @@
-# # Microsoft Sentinel Integration
+# Microsoft Sentinel Integration
 
 This directory contains **modular Microsoft Sentinel content** for a production-grade Azure security monitoring environment, including:
 
