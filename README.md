@@ -6,11 +6,10 @@
 This repository defines a **modular, production-lean Azure infrastructure** using **Bicep**, **GitHub Actions**, and **Azure-native governance** principles.
 
 It provides a complete Azure landing zone with CI/CD, secure AKS, and Microsoft Sentinel integration — designed for:
-
-- Security-conscious deployments
-- DevSecOps pipelines (OIDC-based)
-- Policy-driven governance
-- Sentinel automation and telemetry readiness
+  - Security-conscious deployments
+  - DevSecOps pipelines (OIDC-based)
+  - Policy-driven governance
+  - Sentinel automation and telemetry readiness
 
 ---
 
