@@ -1,38 +1,75 @@
-# Microsoft Sentinel Log Ingestion Lab
+# # Microsoft Sentinel Integration
 
-This lab simulates and validates the ingestion of **Windows Security Event Logs** into Microsoft Sentinel via **Azure Monitor Agent (AMA)** and a **Data Collection Rule (DCR)**, with automated rule deployment through **GitHub Actions**.
+This directory contains **modular Microsoft Sentinel content** for a production-grade Azure security monitoring environment, including:
 
-## 🎯 Skills Demonstrated
-- Azure Monitor Agent installation and configuration
-- Data Collection Rule (DCR) authoring and VM association
-- Log Analytics Workspace (LAW) integration
-- Microsoft Sentinel readiness and alert rule deployment
-- Event simulation + validation with **Kusto Query Language (KQL)**
-- CI/CD for analytics rules with validation + tagging
+- 🔍 Custom **Analytics Rules** (KQL-based alerting)
+- 📊 **Workbooks** for visualization and dashboards
+- 🔄 **GitHub Actions automation** for rule deployment and tagging validation
+- 🧪 A **Log Ingestion Lab** to simulate Windows Security Event ingestion using Azure Monitor Agent and Data Collection Rules (DCR)
 
-## 🧱 Prerequisites
-Before deploying, ensure:
-- A test VM named sentinelvm01 exists in resource group rg-sec-test
-- A Log Analytics Workspace named law-sec-ops is deployed
-- Azure CLI is installed and authenticated
-- You have Contributor permissions on the target resource group
+Designed to support secure-by-default detection engineering and end-to-end visibility.
 
-## 🚀 Deploy AMA + DCR via Script
-This command installs AMA, configures a DCR, and associates it with the VM:
+---
+
+## 🔧 Sentinel Automation with GitHub Actions
+
+Sentinel rules under `sentinel/analytics/` are automatically deployed using a dedicated GitHub Actions workflow.
+
+### Features
+
+- ✅ Validates all `.json` rule files for proper syntax
+- 🏷️ Enforces presence of required tags (Environment, Owner, Project, DeployedBy)
+- 🚀 Deploys each rule to Sentinel via REST API with `az rest`
+- 🔐 Uses [OIDC-based login](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure?tabs=azure-cli%2Clinux) (no stored secrets)
+
+### Required Tags Example
+
+```json
+"tags": {
+  "Environment": "Dev",
+  "Owner": "security-team@example.com",
+  "Project": "iac-foundation",
+  "DeployedBy": "GitHubActions"
+}
+```
+### Trigger Conditions
+  - Any push to sentinel/analytics/**
+  - Manual runs via the GitHub UI (workflow_dispatch)
+
+📂 See .github/workflows/sentinel-rule-deploy.yaml
+
+---
+
+## 🧪 Log Ingestion Lab
+A hands-on lab for simulating ingestion of **Windows Security Events** into Sentinel using:
+  - ⚙️ Azure Monitor Agent (AMA)
+  - 📜 Data Collection Rule (DCR)
+  - 📡 Log Analytics Workspace: law-sec-ops
+  - 🧠 Microsoft Sentinel
+
+### Components
+
+| Components | Description |
+|--------|-------|
+| sentinelvm01 | Windows VM (test host) |
+| sentinel-dcr | Data Collection Rule (ingests Security!* logs) |
+| AMA Extension | Installed on VM and bound to DCR |
+| law-sec-ops | Log Analytics Workspace (feeds Sentinel) |
+
+### Deployment
 
 ```powershell
 cd .\sentinel\ingest-lab\
 .\deploy.ps1
 ```
 
-## 🧪 Simulate Security Events (4625)
-To generate test security events on the VM:
+Simulate Events: 
 
 ```powershell
 .\simulate-events.ps1
 ```
 
-Ingested logs can be queried in Sentinel > Logs using:
+### Confirm Ingestion in Sentinel
 
 ```kusto
 SecurityEvent
@@ -44,62 +81,46 @@ Allow ~5 minutes for ingestion.
 
 ---
 
-## 🖼️ Architecture Diagram
+## 📊 Workbooks (Custom Dashboards)
 
-```mermaid
-graph LR
-  VM[Windows VM<br>sentinelvm01]
-  DCR[Data Collection Rule<br>sentinel-dcr]
-  LAW[Log Analytics Workspace<br>law-sec-ops]
-  Sentinel[Microsoft Sentinel]
+The sentinel/workbooks/ directory holds custom Sentinel workbooks (JSON-formatted ARM templates) for dashboard visualization.
 
-  VM -->|Event Logs| DCR
-  DCR -->|Security Events<br>via XPath| LAW
-  LAW -->|Analytics Rules,<br>Workbooks, etc.| Sentinel
+To deploy:
+
+```bash
+az resource create \
+  --resource-group rg-shared-services \
+  --resource-type Microsoft.Insights/workbooks \
+  --name "<workbook-name>" \
+  --properties @"sentinel/workbooks/<workbook>.json" \
+  --location eastus2
 ```
 
 ---
 
-## 🔄 Sentinel Automation via GitHub Actions
-
-Analytics rules under sentinel/analytics/ are validated and deployed via a GitHub Actions workflow (sentinel-rule-deploy.yaml):
-
-### ✅ Workflow Capabilities
-- **Trigger**: On push to sentinel/analytics/** or manual dispatch
-- **Security**: Azure login via OIDC (no secrets stored)
-- **Validation**: Ensures JSON syntax + required tags
-- **Deployment**: Uses az rest with the Sentinel ARM API
-
-### 🏷️ Required Tags for Each Rule
-
-Each .json analytics rule must contain a tags block:
-
-```json
-"tags": {
-  "Environment": "Dev",
-  "Owner": "security-team@example.com",
-  "Project": "iac-foundation",
-  "DeployedBy": "GitHubActions"
-}
-```
-Missing tags cause the pipeline to fail — ensuring traceability and compliance.
-
-## 📂 File Structure
+📁 Directory Layout
 
 ```text
-sentinel/ingest-lab/
-├── deploy.ps1                # Installs AMA + connects DCR
-├── simulate-events.ps1       # Generates test security events (4625)
-├── patched-dcr.json          # DCR definition wired to LAW
-└── README.md                 # This file
+sentinel/
+├── analytics/        # KQL-based analytics rules (JSON)
+├── workbooks/        # Dashboard visualizations (ARM templates)
+├── ingest-lab/       # Log ingestion simulation (scripts + templates)
+│   ├── deploy.ps1
+│   ├── simulate-events.ps1
+│   └── patched-dcr.json
+└── README.md         # You are here
 ```
-Related folders:
-  - sentinel/analytics/ — Alert rules deployed via CI/CD
-  - sentinel/workbooks/ — Custom Sentinel workbook templates (optional)
+
 ---
 
 ## ✅ Next Steps
-  - Create custom analytics rules under sentinel/analytics/
-  - Confirm logs appear in Sentinel via SecurityEvent queries
-  - Expand detection scenarios (e.g. impossible travel, brute force, etc.)
-  - Integrate with dashboards or automated incident response
+  - Add custom workbooks and link to shared workspace
+  - Tune analytics rules with incident enrichment
+  - Implement alert grouping and MITRE coverage tracking
+  - Integrate threat intelligence (TI) providers
+
+---
+
+## 🧠 Learn More
+- https://learn.microsoft.com/en-us/azure/sentinel/
+- https://learn.microsoft.com/en-us/azure/data-explorer/kusto/query/
