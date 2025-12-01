@@ -34,12 +34,6 @@ permissions:
 
 env:
   AZ_LOCATION: ${{ inputs.location || 'eastus2' }}
-  PARAMS: >-
-    namePrefixHub=hub
-    namePrefixSpoke=spoke-app
-    deployPolicies=${{ inputs.deployPolicies || false }}
-    deployAcr=${{ inputs.deployAcr || false }}
-    acrName=${{ inputs.acrName || 'iacfoundationacr' }}
 
 jobs:
   deploy:
@@ -75,15 +69,17 @@ jobs:
       - name: Bicep Build Check (Syntax)
         run: az bicep build --file main.bicep
 
-      - name: Show Deployment Parameters
-        run: echo "$PARAMS"
-
       - name: Run What-If Deployment
         run: |
           az deployment sub what-if \
             --location "$AZ_LOCATION" \
             --template-file ./main.bicep \
-            --parameters $PARAMS \
+            --parameters \
+              namePrefixHub=hub \
+              namePrefixSpoke=spoke-app \
+              deployPolicies=${{ inputs.deployPolicies }} \
+              deployAcr=${{ inputs.deployAcr }} \
+              acrName=${{ inputs.acrName }} \
             --name whatif-${{ github.run_number }} | tee what-if.txt
 
       - name: Upload What-If Report
@@ -97,5 +93,10 @@ jobs:
           az deployment sub create \
             --location "$AZ_LOCATION" \
             --template-file ./main.bicep \
-            --parameters $PARAMS \
+            --parameters \
+              namePrefixHub=hub \
+              namePrefixSpoke=spoke-app \
+              deployPolicies=${{ inputs.deployPolicies }} \
+              deployAcr=${{ inputs.deployAcr }} \
+              acrName=${{ inputs.acrName }} \
             --name deploy-${{ github.run_number }}
