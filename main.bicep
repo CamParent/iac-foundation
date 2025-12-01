@@ -73,6 +73,12 @@ param deployDefender bool = true
 @description('Azure AD group object IDs to grant AKS admin access.')
 param aksAdminGroupObjectIds array = []
 
+@description('Deploy Azure Container Registry (ACR) to shared resource group?')
+param deployAcr bool = false
+
+@description('Name of the Azure Container Registry')
+param acrName string = 'iacfoundationacr'
+
 @description('Deploy Microsoft Sentinel analytics rules (Detection-as-Code) to the law-sec-ops workspace.')
 param deploySentinelAnalytics bool = false
 
@@ -240,7 +246,22 @@ module aks './modules/aks.bicep' = if (deployAks) {
 }
 
 // =====================================================
-// 9)Policy
+// 9) ACR Module
+// =====================================================
+module acr './modules/acr.bicep' = if (deployAcr) {
+  name: 'mod-acr'
+  scope: rgShared
+  params: {
+    acrName: acrName
+    acrSku: 'Standard'
+    location: location
+    tags: tags
+    aksPrincipalId: deployAks ? aks.outputs.aksPrincipalId : '00000000-0000-0000-0000-000000000000'
+  }
+}
+
+// =====================================================
+// 10)Policy
 // =====================================================
 module policies './modules/policy.bicep' = if (deployPolicies) {
   name: 'mod-policies'
@@ -251,7 +272,7 @@ module policies './modules/policy.bicep' = if (deployPolicies) {
 }
 
 // =====================================================
-// 10) SENTINEL ANALYTICS (Detection-as-Code)
+// 11) SENTINEL ANALYTICS (Detection-as-Code)
 //     Deploys Scheduled Analytics Rules against law-sec-ops
 // =====================================================
 module sentinelAnalytics './sentinel/analytics.bicep' = if (deploySentinelAnalytics) {
@@ -263,7 +284,7 @@ module sentinelAnalytics './sentinel/analytics.bicep' = if (deploySentinelAnalyt
 }
 
 // =====================================================
-// 11) SENTINEL WORKBOOK: SOC Detection Summary
+// 12) SENTINEL WORKBOOK: SOC Detection Summary
 // =====================================================
 module sentinelWorkbook './sentinel/workbook.bicep' = if (deploySentinelWorkbook) {
   name: 'mod-soc-workbook'
@@ -284,3 +305,5 @@ output firewallPublicIp string = firewall.outputs.firewallPublicIp
 output keyVaultId string = deployKeyVault ? keyVault.outputs.keyVaultId : ''
 output aksName string  = deployAks ? aks.outputs.aksNameOut : ''
 output aksFqdn string  = deployAks ? aks.outputs.aksFqdn : ''
+output acrLoginServer string = deployAcr ? acr.outputs.acrLoginServer : ''
+output acrResourceId string = deployAcr ? acr.outputs.acrResourceId : ''
