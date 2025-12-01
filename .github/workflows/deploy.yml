@@ -75,11 +75,29 @@ jobs:
             --location "$AZ_LOCATION" \
             --template-file ./main.bicep \
             --parameters \
+              location=${{ inputs.location }} \
               namePrefixHub=hub \
               namePrefixSpoke=spoke-app \
+              hubRgName=rg-hub-networking \
+              spokeRgName=rg-spoke-app \
+              sharedRgName=rg-shared-services \
+              hubAddressSpace='10.1.0.0/16' \
+              spokeAddressSpace='10.2.0.0/16' \
+              hubSubnets='{"firewall":"10.1.0.0/26","management":"10.1.0.64/26","workloads":"10.1.1.0/24"}' \
+              appSubnetPrefix='10.2.1.0/24' \
+              aksSubnetPrefix='10.2.10.0/24' \
+              firewallSku=Standard \
+              threatIntelMode=Deny \
+              deployKeyVault=true \
               deployPolicies=${{ inputs.deployPolicies }} \
               deployAcr=${{ inputs.deployAcr }} \
               acrName=${{ inputs.acrName }} \
+              deployAks=false \
+              deployDefender=true \
+              deploySentinelWorkbook=true \
+              deploySentinelAnalytics=false \
+              aksAdminGroupObjectIds='[]' \
+              tags='{"environment":"dev","workload":"foundation","owner":"cam"}' \
             --name whatif-${{ github.run_number }} | tee what-if.txt
 
       - name: Upload What-If Report
@@ -94,9 +112,27 @@ jobs:
             --location "$AZ_LOCATION" \
             --template-file ./main.bicep \
             --parameters \
+              location=${{ inputs.location }} \
               namePrefixHub=hub \
               namePrefixSpoke=spoke-app \
+              hubRgName=rg-hub-networking \
+              spokeRgName=rg-spoke-app \
+              sharedRgName=rg-shared-services \
+              hubAddressSpace='10.1.0.0/16' \
+              spokeAddressSpace='10.2.0.0/16' \
+              hubSubnets='{"firewall":"10.1.0.0/26","management":"10.1.0.64/26","workloads":"10.1.1.0/24"}' \
+              appSubnetPrefix='10.2.1.0/24' \
+              aksSubnetPrefix='10.2.10.0/24' \
+              firewallSku=Standard \
+              threatIntelMode=Deny \
+              deployKeyVault=true \
               deployPolicies=${{ inputs.deployPolicies }} \
               deployAcr=${{ inputs.deployAcr }} \
               acrName=${{ inputs.acrName }} \
+              deployAks=false \
+              deployDefender=true \
+              deploySentinelWorkbook=true \
+              deploySentinelAnalytics=false \
+              aksAdminGroupObjectIds='[]' \
+              tags='{"environment":"dev","workload":"foundation","owner":"cam"}' \
             --name deploy-${{ github.run_number }}
