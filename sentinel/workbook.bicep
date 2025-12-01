@@ -12,14 +12,14 @@ resource workbook 'Microsoft.Insights/workbooks@2023-06-01' = {
   name: guid(resourceGroup().id, workbookDisplayName)
   location: resourceGroup().location
   kind: 'shared'
+  tags: {
+    project: 'iac-foundation'
+  }
   properties: {
     displayName: workbookDisplayName
     category: 'security'
     sourceId: sourceId
     serializedData: workbookDefinitionFile
     version: '1.0'
-    tags: {
-      project: 'iac-foundation'
-    }
   }
 }
