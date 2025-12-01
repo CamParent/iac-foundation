@@ -18,6 +18,15 @@ on:
         required: true
         type: boolean
         default: true
+      deployAcr:
+        description: Deploy Azure Container Registry (ACR)
+        required: true
+        type: boolean
+        default: false
+      acrName:
+        description: Name of the ACR to deploy
+        required: false
+        default: iacfoundationacr
 
 permissions:
   id-token: write
@@ -25,7 +34,12 @@ permissions:
 
 env:
   AZ_LOCATION: ${{ inputs.location || 'eastus2' }}
-  PARAMS: namePrefixHub=hub namePrefixSpoke=spoke-app deployPolicies=${{ inputs.deployPolicies || false }}
+  PARAMS: >-
+    namePrefixHub=hub
+    namePrefixSpoke=spoke-app
+    deployPolicies=${{ inputs.deployPolicies || false }}
+    deployAcr=${{ inputs.deployAcr || false }}
+    acrName=${{ inputs.acrName || 'iacfoundationacr' }}
 
 jobs:
   deploy:
@@ -60,6 +74,9 @@ jobs:
 
       - name: Bicep Build Check (Syntax)
         run: az bicep build --file main.bicep
+
+      - name: Show Deployment Parameters
+        run: echo "$PARAMS"
 
       - name: Run What-If Deployment
         run: |
