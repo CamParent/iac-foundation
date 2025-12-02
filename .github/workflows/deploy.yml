@@ -27,6 +27,11 @@ on:
         description: Name of the ACR to deploy
         required: false
         default: iacfoundationacr
+      deployAks:
+        description: Deploy AKS Cluster
+        required: true
+        type: boolean
+        default: true
 
 permissions:
   id-token: write
@@ -92,7 +97,7 @@ jobs:
               deployPolicies=${{ inputs.deployPolicies }} \
               deployAcr=${{ inputs.deployAcr }} \
               acrName=${{ inputs.acrName }} \
-              deployAks=false \
+              deployAks=${{ inputs.deployAks }} \
               deployDefender=true \
               deploySentinelWorkbook=true \
               deploySentinelAnalytics=false \
@@ -129,7 +134,7 @@ jobs:
               deployPolicies=${{ inputs.deployPolicies }} \
               deployAcr=${{ inputs.deployAcr }} \
               acrName=${{ inputs.acrName }} \
-              deployAks=false \
+              deployAks=${{ inputs.deployAks }} \
               deployDefender=true \
               deploySentinelWorkbook=true \
               deploySentinelAnalytics=false \
