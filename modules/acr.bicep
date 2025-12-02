@@ -15,10 +15,10 @@ param location string = resourceGroup().location
 @description('Tags to apply to the ACR')
 param tags object
 
-@description("Principal ID of AKS cluster's managed identity for RBAC")
+@description('Principal ID of AKS cluster\'s managed identity for RBAC')
 param aksPrincipalId string
 
-resource containerRegistry 'Microsoft.ContainerRegistry/registries@2023-05-01' = {
+resource containerRegistry 'Microsoft.ContainerRegistry/registries@2021-09-01' = {
   name: acrName
   location: location
   sku: {

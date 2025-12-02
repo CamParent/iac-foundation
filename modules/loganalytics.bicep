@@ -10,10 +10,10 @@ param namePrefix string
 resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01' = {
   name: '${namePrefix}-sec-ops'
   location: location
-  sku: {
-    name: 'PerGB2018'
-  }
   properties: {
+    sku: {
+      name: 'PerGB2018'
+    }
     retentionInDays: 30
   }
   tags: tags
