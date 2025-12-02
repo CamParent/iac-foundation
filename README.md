@@ -25,6 +25,147 @@ It provides a complete Azure landing zone with CI/CD, secure AKS, and Microsoft 
 - **Microsoft Sentinel**: rules, ingestion lab, and automation workflows
 
 ---
+## 💸 Cost Controls & Safe Lab Deployment (Intentionally Designed)
+
+This project includes **first-class cost governance** to ensure the environment remains affordable for personal use while still showcasing production-grade architecture.
+
+Because Azure Firewall, AKS nodepools, and Defender plans can become expensive, this IaC framework implements **toggle-based cost control** across Bicep and GitHub Actions.
+
+### 🔧 Deploy-Time Feature Toggles (Bicep Parameters)
+
+Each major component is **opt-in**, allowing you to deploy only what you need:
+
+| Feature                     | Parameter                  | Default | Notes                                                   |
+|-----------------------------|----------------------------|---------|---------------------------------------------------------|
+| **Azure Firewall (expensive)** | `deployFirewall`           | `false` | Prevents accidental $300–$1000/mo charges               |
+| **AKS Cluster**             | `deployAks`                | `false` | No nodes = no VM cost; deploy only when needed          |
+| **Defender for Cloud (AKS)**| `deployDefender`           | `false` | Avoids Defender plan charges per resource                |
+| **Azure Container Registry**| `deployAcr`                | `false` | Optional ACR for AKS workloads                           |
+| **Sentinel Analytics Rules**| `deploySentinelAnalytics`  | `false` | Heavy log ingestion left optional                       |
+| **Sentinel Workbook**       | `deploySentinelWorkbook`   | `true`  | Visual SOC overview included by default                 |
+
+### 🚦 Cost Controls Integrated Into GitHub Actions (`deploy.yml`)
+
+The CI/CD workflow exposes the same toggles via **workflow_dispatch** inputs, allowing you to choose the appropriate cost level for each deployment:
+
+| Mode | Description |
+|------|-------------|
+| **Cheap Mode** | Deploys only hub, spoke, Log Analytics, Key Vault, and Sentinel Workbook |
+| **Full Demo Mode** | Optionally deploys AKS, Azure Firewall, Defender for Cloud, ACR, analytics rules, etc. |
+| **Hybrid Mode** | Mix-and-match: e.g., deploy AKS but skip Firewall, or deploy Sentinel but skip Defender |
+
+**Example GitHub Actions UI:**
+
+[ ] Deploy Azure Firewall (expensive)
+[x] Deploy Sentinel Workbook
+[ ] Deploy Sentinel Analytics
+[ ] Deploy AKS Cluster
+[ ] Enable Defender for Cloud (AKS)
+
+This ensures you **never accidentally deploy costly resources** during normal iteration or development cycles.
+
+### 🧠 Cost Toggle Flow (GitHub Actions → Bicep → Azure)
+
+```mermaid
+flowchart TD
+    subgraph A["GitHub Actions Inputs (workflow_dispatch)"]
+        FWF["deployFirewall (bool)"]
+        FAKS["deployAks (bool)"]
+        FDEF["deployDefender (bool)"]
+        FACR["deployAcr (bool)"]
+        FSWA["deploySentinelAnalytics (bool)"]
+        FSWB["deploySentinelWorkbook (bool)"]
+    end
+
+    subgraph B["Bicep Parameters (main.bicep)"]
+        BFWF["param deployFirewall"]
+        BAKS["param deployAks"]
+        BDEF["param deployDefender"]
+        BACR["param deployAcr"]
+        BSA["param deploySentinelAnalytics"]
+        BSW["param deploySentinelWorkbook"]
+    end
+
+    subgraph C["Conditional Modules / Resources"]
+        MFW["modules/firewall.bicep\n(if deployFirewall)"]
+        MAKS["modules/aks.bicep\n(if deployAks)"]
+        MDEF["modules/defender.bicep\n(if deployDefender)"]
+        MACR["modules/acr.bicep\n(if deployAcr)"]
+        MSA["sentinel/analytics.bicep\n(if deploySentinelAnalytics)"]
+        MSW["sentinel/workbook.bicep\n(if deploySentinelWorkbook)"]
+    end
+
+    subgraph D["Cost Impact"]
+        CLOW["Cheap Mode\n(core networking + LA + KV)"]
+        CHYB["Hybrid Mode\n(select workloads only]"]
+        CHIGH["Full Demo Mode\n(all security + platform services)"]
+    end
+
+    %% Wiring: Actions -> Bicep
+    FWF --> BFWF
+    FAKS --> BAKS
+    FDEF --> BDEF
+    FACR --> BACR
+    FSWA --> BSA
+    FSWB --> BSW
+
+    %% Wiring: Bicep -> Modules
+    BFWF --> MFW
+    BAKS --> MAKS
+    BDEF --> MDEF
+    BACR --> MACR
+    BSA --> MSA
+    BSW --> MSW
+
+    %% Wiring: Modules -> Cost Modes
+    MFW --> CHIGH
+    MAKS --> CHYB
+    MDEF --> CHIGH
+    MACR --> CHYB
+    MSA --> CHYB
+    MSW --> CLOW
+
+    CLOW --> CHYB --> CHIGH
+```
+
+This flow demonstrates how GitHub Actions inputs drive Bicep parameters, which in turn conditionally deploy (or skip) costly resources — turning cost governance into code.
+
+### 🛡️ Why This Matters (Real-World Skill)
+
+Cost governance is a core cloud engineering responsibility — and this project intentionally demonstrates:
+
+- **Cost-aware IaC design**
+- **Predictable spend controls**
+- **Safe CI/CD deployments**
+- **Modular governance patterns**
+- **Guardrails to prevent accidental overspend**
+
+These capabilities directly translate to enterprise best practices.  
+Hiring managers immediately see that you know how to:
+
+- Secure an environment  
+- Automate deployments  
+- **Control cloud spend effectively**
+
+This is especially critical in Azure environments where misconfigured deployments can easily exceed hundreds of dollars per month.
+
+### 👍 Expected Monthly Cost (Cheap Mode)
+
+With `deployFirewall=false` and `deployAks=false`, the baseline environment stays very affordable:
+
+| Component | Estimated Cost |
+|-----------|----------------|
+| Log Analytics (30 days retention) | ~$2–$5 |
+| Key Vault | ~$1 |
+| Storage + misc | ~$1–$2 |
+| Resource groups, VNets, route tables | **$0** |
+
+**Total:** **~$5–$10 per month**
+
+Full demo mode costs more (AKS nodepools, Firewall, Defender),  
+but only when **intentionally enabled** through the CI/CD toggles.
+
+---
 
 ## 🌎 Architecture Overview
 

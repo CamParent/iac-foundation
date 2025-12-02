@@ -51,6 +51,9 @@ param firewallSku string = 'Standard'
 @description('Azure Firewall threat intel mode.')
 param threatIntelMode string = 'Deny'
 
+@description('Deploy Azure Firewall into the hub VNet (expensive).')
+param deployFirewall bool = false
+
 @description('Deploy Key Vault (in shared RG)?')
 param deployKeyVault bool = true
 
@@ -68,7 +71,7 @@ param deployPolicies bool = false
 param deployAks bool = false
 
 @description('Enable Defender for Cloud plan for AKS (KubernetesService).')
-param deployDefender bool = true
+param deployDefender bool = false
 
 @description('Azure AD group object IDs to grant AKS admin access.')
 param aksAdminGroupObjectIds array = []
@@ -123,11 +126,11 @@ module hubNet './modules/networking.bicep' = {
 }
 
 // =====================================================
-// 2) FIREWALL (in hub)
+// 2) FIREWALL (in hub, optional)
 //    requires: firewallSubnetId
 //    outputs: firewallId, firewallPublicIp, firewallName
 // =====================================================
-module firewall './modules/firewall.bicep' = {
+module firewall './modules/firewall.bicep' = if (deployFirewall) {
   name: 'mod-hub-firewall'
   scope: rgHub
   params: {
@@ -261,7 +264,7 @@ module acr './modules/acr.bicep' = if (deployAcr) {
 }
 
 // =====================================================
-// 10)Policy
+// 10) Policy
 // =====================================================
 module policies './modules/policy.bicep' = if (deployPolicies) {
   name: 'mod-policies'
@@ -299,11 +302,11 @@ module sentinelWorkbook './sentinel/workbook.bicep' = if (deploySentinelWorkbook
 // ---------------------------
 // Outputs (handy for pipelines)
 // ---------------------------
-output hubVnetId string       = hubNet.outputs.vnetId
-output spokeVnetId string     = spoke.outputs.vnetId
-output firewallPublicIp string = firewall.outputs.firewallPublicIp
-output keyVaultId string = deployKeyVault ? keyVault.outputs.keyVaultId : ''
-output aksName string  = deployAks ? aks.outputs.aksNameOut : ''
-output aksFqdn string  = deployAks ? aks.outputs.aksFqdn : ''
-output acrLoginServer string = deployAcr ? acr.outputs.acrLoginServer : ''
-output acrResourceId string = deployAcr ? acr.outputs.acrResourceId : ''
+output hubVnetId string            = hubNet.outputs.vnetId
+output spokeVnetId string          = spoke.outputs.vnetId
+output firewallPublicIp string     = deployFirewall ? firewall.outputs.firewallPublicIp : ''
+output keyVaultId string           = deployKeyVault ? keyVault.outputs.keyVaultId : ''
+output aksName string              = deployAks ? aks.outputs.aksNameOut : ''
+output aksFqdn string              = deployAks ? aks.outputs.aksFqdn : ''
+output acrLoginServer string       = deployAcr ? acr.outputs.acrLoginServer : ''
+output acrResourceId string        = deployAcr ? acr.outputs.acrResourceId : ''

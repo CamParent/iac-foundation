@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-acr-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-acr-test
+  template:
+    metadata:
+      labels:
+        app: nginx-acr-test
+    spec:
+      containers:
+      - name: nginx
+        image: iacfoundationacr.azurecr.io/nginx:latest
+        ports:
+        - containerPort: 80

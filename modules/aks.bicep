@@ -28,20 +28,16 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
     tier: 'Standard'
   }
     properties: {
-    // Let AKS pick a supported version by default.
     dnsPrefix: '${aksName}-dns'
 
     enableRBAC: true
 
-    // Azure Monitor for containers (metrics only)
     azureMonitorProfile: {
       metrics: {
         enabled: true
-        // kubeStateMetrics config can be added later if you want finer control
       }
     }
 
-    // Defender + Log Analytics + Workload Identity
     securityProfile: {
       defender: {
         logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceId
@@ -54,37 +50,31 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
       }
     }
 
-    // Enable OIDC issuer to support workload identity
     oidcIssuerProfile: {
       enabled: true
     }
 
-    // Entra ID (AAD) integration with Azure RBAC
     aadProfile: {
       managed: true
       enableAzureRBAC: true
       adminGroupObjectIDs: adminGroupObjectIds
     }
 
-    // Private cluster by default
     apiServerAccessProfile: {
       enablePrivateCluster: true
-      // privateDNSZone: 'system' // you can uncomment/adjust later if needed
     }
 
-    // Azure CNI Overlay + Cilium dataplane (modern AKS networking)
     networkProfile: {
       networkPlugin: 'azure'
       networkPluginMode: 'overlay'
       networkDataplane: 'cilium'
 
-      // Pod & service CIDRs live "behind" the nodes, not inside your VNet space
       podCidr: '10.10.0.0/16'
       serviceCidr: '10.11.0.0/16'
       dnsServiceIP: '10.11.0.10'
 
       loadBalancerSku: 'standard'
-      outboundType: 'loadBalancer' // later you can move to 'userDefinedRouting' + Firewall UDR
+      outboundType: 'loadBalancer'
     }
 
     agentPoolProfiles: [
@@ -104,7 +94,6 @@ resource aks 'Microsoft.ContainerService/managedClusters@2024-02-01' = {
   }
 }
 
-// Diagnostic settings: send AKS control-plane logs + metrics to Log Analytics (law-sec-ops)
 resource aksDiagnostics 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = {
   name: 'aks-to-law-sec-ops'
   scope: aks

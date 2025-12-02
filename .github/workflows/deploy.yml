@@ -28,10 +28,30 @@ on:
         required: false
         default: iacfoundationacr
       deployAks:
-        description: Deploy AKS Cluster
+        description: Deploy AKS Cluster (compute + logs)
+        required: true
+        type: boolean
+        default: false
+      deployFirewall:
+        description: Deploy Azure Firewall (expensive)
+        required: true
+        type: boolean
+        default: false
+      deployDefender:
+        description: Enable Defender for Cloud plans (may incur cost)
+        required: true
+        type: boolean
+        default: false
+      deploySentinelWorkbook:
+        description: Deploy Sentinel Workbook
         required: true
         type: boolean
         default: true
+      deploySentinelAnalytics:
+        description: Deploy Sentinel Analytics rules
+        required: true
+        type: boolean
+        default: false
 
 permissions:
   id-token: write
@@ -39,6 +59,13 @@ permissions:
 
 env:
   AZ_LOCATION: ${{ inputs.location || 'eastus2' }}
+  DEPLOY_POLICIES: ${{ inputs.deployPolicies || true }}
+  DEPLOY_ACR: ${{ inputs.deployAcr || false }}
+  DEPLOY_AKS: ${{ inputs.deployAks || false }}
+  DEPLOY_FIREWALL: ${{ inputs.deployFirewall || false }}
+  DEPLOY_DEFENDER: ${{ inputs.deployDefender || false }}
+  DEPLOY_SENTINEL_WORKBOOK: ${{ inputs.deploySentinelWorkbook || true }}
+  DEPLOY_SENTINEL_ANALYTICS: ${{ inputs.deploySentinelAnalytics || false }}
 
 jobs:
   deploy:
@@ -80,7 +107,7 @@ jobs:
             --location "$AZ_LOCATION" \
             --template-file ./main.bicep \
             --parameters \
-              location=${{ inputs.location }} \
+              location=${{ env.AZ_LOCATION }} \
               namePrefixHub=hub \
               namePrefixSpoke=spoke-app \
               hubRgName=rg-hub-networking \
@@ -93,14 +120,15 @@ jobs:
               aksSubnetPrefix='10.2.10.0/24' \
               firewallSku=Standard \
               threatIntelMode=Deny \
+              deployFirewall=${{ env.DEPLOY_FIREWALL }} \
               deployKeyVault=true \
-              deployPolicies=${{ inputs.deployPolicies }} \
-              deployAcr=${{ inputs.deployAcr }} \
-              acrName=${{ inputs.acrName }} \
-              deployAks=${{ inputs.deployAks }} \
-              deployDefender=true \
-              deploySentinelWorkbook=true \
-              deploySentinelAnalytics=false \
+              deployPolicies=${{ env.DEPLOY_POLICIES }} \
+              deployAcr=${{ env.DEPLOY_ACR }} \
+              acrName=${{ inputs.acrName || 'iacfoundationacr' }} \
+              deployAks=${{ env.DEPLOY_AKS }} \
+              deployDefender=${{ env.DEPLOY_DEFENDER }} \
+              deploySentinelWorkbook=${{ env.DEPLOY_SENTINEL_WORKBOOK }} \
+              deploySentinelAnalytics=${{ env.DEPLOY_SENTINEL_ANALYTICS }} \
               aksAdminGroupObjectIds='[]' \
               tags='{"environment":"dev","workload":"foundation","owner":"cam"}' \
             --name whatif-${{ github.run_number }} | tee what-if.txt
@@ -117,7 +145,7 @@ jobs:
             --location "$AZ_LOCATION" \
             --template-file ./main.bicep \
             --parameters \
-              location=${{ inputs.location }} \
+              location=${{ env.AZ_LOCATION }} \
               namePrefixHub=hub \
               namePrefixSpoke=spoke-app \
               hubRgName=rg-hub-networking \
@@ -130,14 +158,15 @@ jobs:
               aksSubnetPrefix='10.2.10.0/24' \
               firewallSku=Standard \
               threatIntelMode=Deny \
+              deployFirewall=${{ env.DEPLOY_FIREWALL }} \
               deployKeyVault=true \
-              deployPolicies=${{ inputs.deployPolicies }} \
-              deployAcr=${{ inputs.deployAcr }} \
-              acrName=${{ inputs.acrName }} \
-              deployAks=${{ inputs.deployAks }} \
-              deployDefender=true \
-              deploySentinelWorkbook=true \
-              deploySentinelAnalytics=false \
+              deployPolicies=${{ env.DEPLOY_POLICIES }} \
+              deployAcr=${{ env.DEPLOY_ACR }} \
+              acrName=${{ inputs.acrName || 'iacfoundationacr' }} \
+              deployAks=${{ env.DEPLOY_AKS }} \
+              deployDefender=${{ env.DEPLOY_DEFENDER }} \
+              deploySentinelWorkbook=${{ env.DEPLOY_SENTINEL_WORKBOOK }} \
+              deploySentinelAnalytics=${{ env.DEPLOY_SENTINEL_ANALYTICS }} \
               aksAdminGroupObjectIds='[]' \
               tags='{"environment":"dev","workload":"foundation","owner":"cam"}' \
             --name deploy-${{ github.run_number }}
