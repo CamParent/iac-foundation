@@ -26,19 +26,20 @@ It provides a complete Azure landing zone with CI/CD, secure AKS, and Microsoft 
 
 ---
 
-## Terraform Variant (Experimental)
+## Terraform Variant (Hub–Spoke Lab)
 
-In addition to the Bicep-based implementation, this repo includes a small
-Terraform lab under [`/terraform`](./terraform) that mirrors the core hub
-networking pattern:
+In addition to the Bicep-based landing zone, this repo includes a small
+Terraform implementation under [`/terraform`](./terraform):
 
-- `terraform/modules/networking` – reusable module for hub RG + VNet
-- `terraform/envs/lab` – simple environment that deploys a hub VNet into its own
-  resource group (`rg-hub-networking-tf`)
+- `terraform/modules/networking` – hub resource group + virtual network
+- `terraform/modules/spoke-networking` – spoke resource group + virtual network + hub–spoke peering
+- `terraform/envs/lab` – opinionated lab environment that deploys:
+  - `rg-hub-networking-tf` / `vnet-hub-01-tf`
+  - `rg-spoke-apps-tf` / `vnet-spoke-01-tf`
+  - bidirectional VNet peering between hub and spoke
 
-This is intentionally scoped to show that the same landing zone concepts can be
-expressed with both **Bicep** and **Terraform**. Over time, additional Terraform
-modules (spokes, AKS, Firewall) can be added to parallel the Bicep design.
+This is intentionally scoped to demonstrate that the same hub–spoke design can
+be expressed with both **Bicep** and **Terraform**, using modular patterns in each.
 
 ---
 
