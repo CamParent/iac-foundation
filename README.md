@@ -27,24 +27,96 @@ It provides a complete Azure landing zone with CI/CD, secure AKS, and Microsoft 
 
 ---
 
-## Terraform Variant (Hub–Spoke Lab + CI/CD)
+## Terraform Variant (Hub–Spoke + AKS + OIDC CI/CD)
 
-This repository includes a parallel Terraform implementation of the core
-hub–spoke landing zone under [`/terraform`](./terraform):
+This repository includes a **parallel Terraform implementation** of the core  
+hub–spoke landing zone under [`/terraform`](./terraform).  
+It mirrors the same enterprise networking and cost-governance principles used
+in the Bicep-based deployment.
 
-- `terraform/modules/networking` – hub resource group + virtual network
-- `terraform/modules/spoke-networking` – spoke VNet + bidirectional peering
-- `terraform/envs/lab` – opinionated lab environment deploying:
-  - `rg-hub-networking-tf` / `vnet-hub-01-tf`
-  - `rg-spoke-apps-tf` / `vnet-spoke-01-tf`
+### 📁 Terraform Structure
 
-A dedicated GitHub Actions workflow (`terraform-plan.yml`) runs:
+- `terraform/modules/networking` – Hub RG + Hub VNet  
+- `terraform/modules/spoke-networking` – Spoke RG + Spoke VNet + bidirectional peering  
+- `terraform/modules/aks` – Optional AKS cluster with subnet injection + cost toggle  
+- `terraform/envs/lab` – Opinionated lab environment wiring all Terraform modules together  
+
+When deployed, the lab creates:
+
+- `rg-hub-networking-tf` / `vnet-hub-01-tf`
+- `rg-spoke-apps-tf` / `vnet-spoke-01-tf`
+- Hub ↔ Spoke VNet peering
+- **Optional** AKS cluster in the spoke VNet
+
+---
+
+### 🚦 Terraform AKS Cost Toggle
+
+AKS is intentionally **opt-in** for cost safety:
+
+| Variable | Default | Behavior |
+|---------|---------|-----------|
+| `deploy_aks` | `false` | Deploys only hub + spoke + peering |
+| `deploy_aks` | `true`  | Adds AKS cluster + AKS subnet |
+
+Example commands:
+
+```bash
+# Baseline hub–spoke only (cheap mode)
+terraform apply
+
+# Full demo mode with AKS (costs money)
+terraform apply -var "deploy_aks=true"
+
+# Remove AKS but keep networking
+terraform apply -var "deploy_aks=false"
+
+# Destroy entire Terraform lab
+terraform destroy -var "deploy_aks=true"
+```
+
+To control cloud spend, the Terraform lab is **kept destroyed by default** and
+is only deployed **intentionally for demos or validation**.
+
+---
+
+### 🔁 Terraform CI/CD (OIDC-Based, Read-Only)
+
+A dedicated GitHub Actions workflow continuously validates Terraform:
+
+`.github/workflows/terraform-plan.yml`
+
+This workflow runs:
+
 - `terraform init`
 - `terraform fmt`
 - `terraform validate`
 - `terraform plan`
 
-using **Azure OIDC (workload identity)** with no stored secrets.
+using **Azure Workload Identity (OIDC)** with **no stored secrets**.
+
+The workflow exposes a UI toggle:
+
+[ ] Include AKS in Terraform plan (costs money if applied)
+
+This allows **safe previewing of AKS-related infrastructure changes without
+applying them**.
+
+---
+
+### 🛡️ Why Terraform Is Included
+
+Terraform is included to demonstrate:
+
+- **Multi-IaC proficiency** (Bicep + Terraform)
+- **Provider-driven Azure automation**
+- **Modular Terraform design**
+- **Hub–spoke networking expressed in both languages**
+- **Cost-aware optional workloads**
+- **OIDC-based CI/CD authentication**
+
+This mirrors how real enterprise platform teams often support **both native
+and third-party IaC tooling side-by-side**.
 
 ---
 
@@ -60,12 +132,12 @@ Each major component is **opt-in**, allowing you to deploy only what you need:
 
 | Feature                     | Parameter                  | Default | Notes                                                   |
 |-----------------------------|----------------------------|---------|---------------------------------------------------------|
-| **Azure Firewall (expensive)** | `deployFirewall`           | `false` | Prevents accidental $300–$1000/mo charges               |
-| **AKS Cluster**             | `deployAks`                | `false` | No nodes = no VM cost; deploy only when needed          |
-| **Defender for Cloud (AKS)**| `deployDefender`           | `false` | Avoids Defender plan charges per resource                |
-| **Azure Container Registry**| `deployAcr`                | `false` | Optional ACR for AKS workloads                           |
-| **Sentinel Analytics Rules**| `deploySentinelAnalytics`  | `false` | Heavy log ingestion left optional                       |
-| **Sentinel Workbook**       | `deploySentinelWorkbook`   | `true`  | Visual SOC overview included by default                 |
+| **Azure Firewall (expensive)** | `deployFirewall`           | `false` | Prevents accidental $300–$1000/mo charges            |
+| **AKS Cluster**                | `deployAks`                | `false` | No nodes = no VM cost; deploy only when needed       |
+| **Defender for Cloud (AKS)**   | `deployDefender`           | `false` | Avoids Defender plan charges per resource            |
+| **Azure Container Registry**   | `deployAcr`                | `false` | Optional ACR for AKS workloads                       |
+| **Sentinel Analytics Rules**   | `deploySentinelAnalytics`  | `false` | Heavy log ingestion left optional                    |
+| **Sentinel Workbook**          | `deploySentinelWorkbook`   | `true`  | Visual SOC overview included by default              |
 
 ### 🚦 Cost Controls Integrated Into GitHub Actions (`deploy.yml`)
 
@@ -120,7 +192,7 @@ flowchart TD
 
     subgraph D["Cost Impact"]
         CLOW["Cheap Mode\n(core networking + LA + KV)"]
-        CHYB["Hybrid Mode\n(select workloads only]"]
+        CHYB["Hybrid Mode\n(select workloads only)"]
         CHIGH["Full Demo Mode\n(all security + platform services)"]
     end
 
@@ -313,7 +385,7 @@ Sentinel-ready telemetry flows into law-sec-ops from:
   - GitHub Action enforces tag compliance and structure
 
 ### Ingestion Lab
-  - sentinelvm01 Windows VM runs test log generato
+  - sentinelvm01 Windows VM runs test log generator
   - Data Collection Rule (DCR) + AMA collects Security logs
   - Logs visible in Sentinel workspace via KQL
 
@@ -324,7 +396,7 @@ Sentinel-ready telemetry flows into law-sec-ops from:
 Deployed via policy.bicep:
 
 | Name | Description |
-|--------|-------|
+|------|-------------|
 | custom-allowed-locations | Restrict to eastus2 |
 | custom-require-standard-publicip | Audit non-Standard IPs |
 | custom-aks-audit-not-private | Audit public AKS API |

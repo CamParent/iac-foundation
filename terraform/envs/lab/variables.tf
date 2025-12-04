@@ -33,3 +33,33 @@ variable "spoke_address_space" {
   type    = list(string)
   default = ["10.21.0.0/16"]
 }
+
+variable "deploy_aks" {
+  type    = bool
+  default = false
+}
+
+variable "aks_cluster_name" {
+  type    = string
+  default = "aks-iac-foundation-tf"
+}
+
+variable "aks_dns_prefix" {
+  type    = string
+  default = "iac-foundation-tf"
+}
+
+variable "aks_subnet_prefix" {
+  type    = string
+  default = "10.21.1.0/24"
+}
+
+variable "aks_node_count" {
+  type    = number
+  default = 1
+}
+
+variable "aks_node_vm_size" {
+  type    = string
+  default = "Standard_B2s"
+}
