@@ -25,6 +25,23 @@ It provides a complete Azure landing zone with CI/CD, secure AKS, and Microsoft 
 - **Microsoft Sentinel**: rules, ingestion lab, and automation workflows
 
 ---
+
+## Terraform Variant (Experimental)
+
+In addition to the Bicep-based implementation, this repo includes a small
+Terraform lab under [`/terraform`](./terraform) that mirrors the core hub
+networking pattern:
+
+- `terraform/modules/networking` – reusable module for hub RG + VNet
+- `terraform/envs/lab` – simple environment that deploys a hub VNet into its own
+  resource group (`rg-hub-networking-tf`)
+
+This is intentionally scoped to show that the same landing zone concepts can be
+expressed with both **Bicep** and **Terraform**. Over time, additional Terraform
+modules (spokes, AKS, Firewall) can be added to parallel the Bicep design.
+
+---
+
 ## 💸 Cost Controls & Safe Lab Deployment (Intentionally Designed)
 
 This project includes **first-class cost governance** to ensure the environment remains affordable for personal use while still showcasing production-grade architecture.
