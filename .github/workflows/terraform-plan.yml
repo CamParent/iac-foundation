@@ -2,6 +2,11 @@ name: Terraform Plan (Hub–Spoke Lab)
 
 on:
   workflow_dispatch:
+    inputs:
+      deploy_aks:
+        type: boolean
+        default: false
+        description: "Include AKS in Terraform plan (costs money if applied)"
 
 permissions:
   id-token: write
@@ -46,4 +51,4 @@ jobs:
 
       - name: Terraform Plan
         working-directory: terraform/envs/lab
-        run: terraform plan -input=false
+        run: terraform plan -input=false -var "deploy_aks=${{ inputs.deploy_aks }}"
