@@ -1,28 +1,22 @@
-variable "location" {
-  type    = string
-  default = "eastus2"
-}
-
-variable "hub_rg_name" {
-  type    = string
-  default = "rg-hub-networking-tf"
-}
-
-variable "hub_vnet_name" {
-  type    = string
-  default = "vnet-hub-01-tf"
-}
-
-variable "hub_address_space" {
-  type    = list(string)
-  default = ["10.11.0.0/16"]
-}
-
 module "networking" {
   source = "../../modules/networking"
 
-  location         = var.location
-  hub_rg_name      = var.hub_rg_name
-  hub_vnet_name    = var.hub_vnet_name
+  location          = var.location
+  hub_rg_name       = var.hub_rg_name
+  hub_vnet_name     = var.hub_vnet_name
   hub_address_space = var.hub_address_space
+}
+
+module "spoke_networking" {
+  source = "../../modules/spoke-networking"
+
+  location = var.location
+
+  spoke_rg_name       = var.spoke_rg_name
+  spoke_vnet_name     = var.spoke_vnet_name
+  spoke_address_space = var.spoke_address_space
+
+  hub_rg_name   = var.hub_rg_name
+  hub_vnet_name = var.hub_vnet_name
+  hub_vnet_id   = module.networking.hub_vnet_id
 }
