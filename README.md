@@ -2,6 +2,7 @@
 [![Deploy Bicep](https://github.com/CamParent/iac-foundation/actions/workflows/deploy.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/deploy.yml)
 [![AKS Deploy](https://github.com/CamParent/iac-foundation/actions/workflows/aks-deploy.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/aks-deploy.yml)
 [![Sentinel Rules](https://github.com/CamParent/iac-foundation/actions/workflows/sentinel-rule-deploy.yaml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/sentinel-rule-deploy.yaml)
+[![Terraform Plan](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan.yml)
 
 This repository defines a **modular, production-lean Azure infrastructure** using **Bicep**, **GitHub Actions**, and **Azure-native governance** principles.
 
@@ -26,20 +27,24 @@ It provides a complete Azure landing zone with CI/CD, secure AKS, and Microsoft 
 
 ---
 
-## Terraform Variant (Hub–Spoke Lab)
+## Terraform Variant (Hub–Spoke Lab + CI/CD)
 
-In addition to the Bicep-based landing zone, this repo includes a small
-Terraform implementation under [`/terraform`](./terraform):
+This repository includes a parallel Terraform implementation of the core
+hub–spoke landing zone under [`/terraform`](./terraform):
 
 - `terraform/modules/networking` – hub resource group + virtual network
-- `terraform/modules/spoke-networking` – spoke resource group + virtual network + hub–spoke peering
-- `terraform/envs/lab` – opinionated lab environment that deploys:
+- `terraform/modules/spoke-networking` – spoke VNet + bidirectional peering
+- `terraform/envs/lab` – opinionated lab environment deploying:
   - `rg-hub-networking-tf` / `vnet-hub-01-tf`
   - `rg-spoke-apps-tf` / `vnet-spoke-01-tf`
-  - bidirectional VNet peering between hub and spoke
 
-This is intentionally scoped to demonstrate that the same hub–spoke design can
-be expressed with both **Bicep** and **Terraform**, using modular patterns in each.
+A dedicated GitHub Actions workflow (`terraform-plan.yml`) runs:
+- `terraform init`
+- `terraform fmt`
+- `terraform validate`
+- `terraform plan`
+
+using **Azure OIDC (workload identity)** with no stored secrets.
 
 ---
 
