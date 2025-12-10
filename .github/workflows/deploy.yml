@@ -18,6 +18,11 @@ on:
         required: true
         type: boolean
         default: true
+      deployKeyVault:
+        description: Deploy shared Key Vault
+        required: true
+        type: boolean
+        default: false
       deployAcr:
         description: Deploy Azure Container Registry (ACR)
         required: true
@@ -60,6 +65,7 @@ permissions:
 env:
   AZ_LOCATION: ${{ inputs.location || 'eastus2' }}
   DEPLOY_POLICIES: ${{ inputs.deployPolicies || true }}
+  DEPLOY_KEYVAULT: ${{ inputs.deployKeyVault || false }}
   DEPLOY_ACR: ${{ inputs.deployAcr || false }}
   DEPLOY_AKS: ${{ inputs.deployAks || false }}
   DEPLOY_FIREWALL: ${{ inputs.deployFirewall || false }}
@@ -121,7 +127,7 @@ jobs:
               firewallSku=Standard \
               threatIntelMode=Deny \
               deployFirewall=${{ env.DEPLOY_FIREWALL }} \
-              deployKeyVault=true \
+              deployKeyVault=${{ env.DEPLOY_KEYVAULT }} \
               deployPolicies=${{ env.DEPLOY_POLICIES }} \
               deployAcr=${{ env.DEPLOY_ACR }} \
               acrName=${{ inputs.acrName || 'iacfoundationacr' }} \
@@ -159,6 +165,7 @@ jobs:
               firewallSku=Standard \
               threatIntelMode=Deny \
               deployFirewall=${{ env.DEPLOY_FIREWALL }} \
+              deployKeyVault=${{ env.DEPLOY_KEYVAULT }} \
               deployPolicies=${{ env.DEPLOY_POLICIES }} \
               deployAcr=${{ env.DEPLOY_ACR }} \
               acrName=${{ inputs.acrName || 'iacfoundationacr' }} \
