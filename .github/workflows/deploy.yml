@@ -159,7 +159,6 @@ jobs:
               firewallSku=Standard \
               threatIntelMode=Deny \
               deployFirewall=${{ env.DEPLOY_FIREWALL }} \
-              deployKeyVault=true \
               deployPolicies=${{ env.DEPLOY_POLICIES }} \
               deployAcr=${{ env.DEPLOY_ACR }} \
               acrName=${{ inputs.acrName || 'iacfoundationacr' }} \
