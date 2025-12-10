@@ -3,6 +3,7 @@
 [![AKS Deploy](https://github.com/CamParent/iac-foundation/actions/workflows/aks-deploy.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/aks-deploy.yml)
 [![Sentinel Rules](https://github.com/CamParent/iac-foundation/actions/workflows/sentinel-rule-deploy.yaml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/sentinel-rule-deploy.yaml)
 [![Terraform Plan](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan.yml)
+[![Terraform Plan (AWS Hub–Spoke SSM Lab)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-aws-hub-spoke.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-aws-hub-spoke.yml)
 
 This repository defines a **modular, production-lean Azure infrastructure** using **Bicep**, **GitHub Actions**, and **Azure-native governance** principles.
 
@@ -308,9 +309,11 @@ graph TD
 │   ├── ingest-lab/                 # Simulated ingestion via DCR + AMA
 │   └── workbooks/                  # Workbook definitions (JSON)
 └── .github/workflows/
-    ├── deploy.yml                  # Infra validation & deploy (Bicep what-if)
+    ├── deploy.yml                  # Azure infra validation & deploy (Bicep + what-if)
     ├── aks-deploy.yml              # Sample app deployment to AKS
-    └── sentinel-rule-deploy.yaml    # Sentinel automation with validation
+    ├── sentinel-rule-deploy.yaml   # Sentinel analytics deployment with validation
+    ├── terraform-plan.yml          # Azure Terraform plan (OIDC to Azure)
+    └── terraform-aws-hub-spoke.yml # AWS Terraform plan (OIDC to AWS)
 ```
 
 ---
