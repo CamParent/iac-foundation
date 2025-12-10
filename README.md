@@ -406,6 +406,212 @@ Assignments (asg3-*) scoped at subscription level.
 
 ---
 
+---
+
+## ☁️ AWS Hub–Spoke + SSM Lab (Terraform)
+
+In addition to Azure, this repo includes a small **AWS hub–spoke lab** managed with Terraform under:
+
+- `terraform/aws/hub-spoke-ssm/`
+
+This environment is designed to showcase:
+
+- **Bringing brownfield AWS infra under Terraform** via `terraform import`
+- **Hub–spoke VPC design** using an **AWS Transit Gateway**
+- **Private management** using **AWS Systems Manager (Session Manager)** and interface endpoints
+- **S3 access via VPC gateway endpoints** from private subnets
+- **ICMP-only lab paths** for clean, controlled connectivity testing
+
+---
+
+### 🧱 AWS Lab Topology
+
+**Region:** `us-east-2`  
+**Addressing:**
+
+- **Hub VPC** – `10.0.0.0/16` (`aws_vpc.hub`)
+- **Spoke VPC** – `10.1.0.0/16` (`aws_vpc.spoke`)
+
+**Hub VPC:**
+
+- Private subnets in `us-east-2a` and `us-east-2b`  
+  - `hub-private-a-1`, `hub-private-a-2`  
+  - `hub-private-b-1`, `hub-private-b-2`
+- Internet Gateway: `hub-igw`
+- Route tables:
+  - `hub-rtb-public` – 0.0.0.0/0 → IGW, 10.1.0.0/16 → Transit Gateway
+  - `hub-rtb-private1-us-east-2a` – 10.1.0.0/16 → Transit Gateway
+  - `hub-rtb-private2-us-east-2b` – 10.1.0.0/16 → Transit Gateway
+  - `hub_main` – default main table
+
+**Spoke VPC:**
+
+- Public subnets (for optional future workloads)
+  - `spoke-subnet-public1-us-east-2a`
+  - `spoke-subnet-public2-us-east-2b`
+- Private subnets
+  - `spoke-subnet-private1-us-east-2a`
+  - `spoke-subnet-private2-us-east-2b`
+- Internet Gateway: `spoke-igw`
+- Route tables:
+  - `spoke-rtb-public` – 0.0.0.0/0 → IGW
+  - `spoke-rtb-private1-us-east-2a` – 10.0.0.0/16 → Transit Gateway, S3 prefix list → S3 endpoint
+  - `spoke-rtb-private2-us-east-2b` – 10.0.0.0/16 → Transit Gateway, S3 prefix list → S3 endpoint
+  - `spoke_main` – default main table
+
+**Transit Gateway:**
+
+- `aws_ec2_transit_gateway.lab`
+- Attachments:
+  - `tgw-attach-hub` – Hub VPC
+  - `tgw-attach-spoke` – Spoke VPC
+
+This gives a **clean, symmetric hub–spoke topology** similar to the Azure design, but implemented with **AWS VPCs + TGW**.
+
+---
+
+### 🔐 Private Management Path (SSM + VPC Endpoints)
+
+The lab demonstrates how to manage EC2 instances **without public IPs** using **AWS Systems Manager**:
+
+**Hub VPC Endpoints:**
+
+- `aws_vpc_endpoint.s3` – S3 **Gateway** endpoint for hub private route tables
+- `aws_vpc_endpoint.ssm` – SSM **Interface** endpoint
+- `aws_vpc_endpoint.ssmmessages` – SSMMessages **Interface** endpoint
+- `aws_vpc_endpoint.ec2messages` – EC2Messages **Interface** endpoint
+
+All interface endpoints live in the private subnets and use a dedicated security group:
+
+- `aws_security_group.ssm_endpoints` (`hub-ssm-endpoints-sg`)  
+  - Ingress: TCP 443 from `10.0.0.0/16`  
+  - Egress: all outbound
+
+**Management instance (hub):**
+
+```hcl
+resource "aws_instance" "hub_test" {
+  ami                  = "ami-00e428798e77d38d9"
+  instance_type        = "t3.micro"
+  subnet_id            = aws_subnet.private_a_2.id
+  vpc_security_group_ids = [
+    aws_security_group.ssm_endpoints.id,
+  ]
+  iam_instance_profile = aws_iam_instance_profile.ec2_ssm_role.name
+
+  tags = {
+    Name = "hub-test"
+  }
+}
+```
+
+- Lives in a **private subnet** (no public IP)
+- Managed via **SSM Session Manager** over VPC interface endpoints
+- Uses instance profile `ec2-ssm-role` to allow SSM access
+
+This mirrors the “bastionless management” pattern often used in production AWS environments.
+
+---
+
+### 🌐 Connectivity Lab: Hub ↔ Spoke ICMP
+
+To validate **Transit Gateway routing** and **security group policy**, the lab includes controlled ICMP-only connectivity between the hub and spoke VPCs.
+
+### Hub ICMP Security Group
+
+`aws_security_group.lab_icmp` (Hub VPC):
+
+- Allows **ICMP (all types)** between:
+  - `10.0.0.0/16` (Hub)
+  - `10.1.0.0/16` (Spoke)
+
+### Spoke ICMP Security Group
+
+`aws_security_group.spoke_icmp` (Spoke VPC):
+
+- Allows **ICMP (all types)** from:
+  - `10.0.0.0/16` (Hub)
+  - `10.1.0.0/16` (Spoke)
+
+---
+
+### 🖥️ Spoke Test Instance
+
+```hcl
+resource "aws_instance" "spoke_test" {
+  ami                    = "ami-00e428798e77d38d9"
+  instance_type          = "t3.micro"
+  subnet_id              = aws_subnet.spoke_private_a.id
+
+  vpc_security_group_ids = [
+    aws_security_group.spoke_icmp.id,
+  ]
+
+  tags = {
+    Name = "spoke-test"
+  }
+}
+```
+
+---
+
+### ✅ Validation Tests (From `hub-test` via SSM)
+
+From the **hub-test** EC2 instance (connected via **SSM Session Manager**):
+
+### 🔹 Validate Transit Gateway + Security Groups
+
+```bash
+ping <spoke-private-ip>
+```
+
+Confirms successful **Hub ↔ Spoke routing** over the **Transit Gateway**.
+
+---
+
+### 🔹 Validate S3 Gateway Endpoint
+
+```bash
+aws s3 ls
+```
+
+Confirms **private subnet access to S3** via the VPC **Gateway Endpoint**.
+
+---
+
+### 📁 AWS Terraform Layout
+
+```text
+terraform/
+  aws/
+    hub-spoke-ssm/
+      main.tf
+      vpc.tf
+      subnets.tf
+      internet-gateway.tf
+      route-tables.tf
+      route-table-associations.tf
+      vpc-endpoints.tf
+      security-groups.tf
+      ec2-instances.tf
+      iam.tf
+      transit-gateway.tf
+```
+
+---
+
+### 🧠 Key AWS Concepts Demonstrated
+
+- **Importing existing AWS resources into Terraform** using `terraform import`
+- **Implementing hub–spoke networking** with VPCs and a Transit Gateway
+- **Enabling bastionless management** via AWS Systems Manager (SSM) and VPC **interface endpoints**
+- **Using ICMP-only security groups** for controlled connectivity testing
+- **Maintaining a cost-conscious lab design**, including:
+  - `t3.micro` EC2 instances
+  - Minimal VPC interface endpoints
+
+---
+
 ## Author
 
 Cameron Parent — Network & Cloud Engineer • Azure Security Engineer • CISSP
