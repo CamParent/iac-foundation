@@ -128,7 +128,7 @@ This mirrors how real platform teams often support **both native and third-party
 
 This project bakes in **cost governance** so the environment stays affordable while still showcasing realistic architecture.
 
-Because Azure Firewall, AKS node pools, and Defender plans can be expensive, the framework uses **toggle-based cost control** across Bicep and GitHub Actions.
+Because Azure Firewall, AKS node pools, and Microsoft Defender plans can be expensive, the framework uses **toggle-based cost control** across Bicep and GitHub Actions.
 
 ### 🔧 Deploy-Time Feature Toggles (Bicep Parameters)
 
