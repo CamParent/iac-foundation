@@ -1,0 +1,16 @@
+name: Self-Hosted Runner Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test-runner:
+    runs-on: [self-hosted, nuc, ubuntu-24.04]
+
+    steps:
+      - name: Show runner info
+        run: |
+          echo "Runner is working!"
+          hostname
+          whoami
+          uname -a
