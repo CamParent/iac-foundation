@@ -253,24 +253,24 @@ but only when **explicitly enabled via CI/CD toggles**.
 
 ```mermaid
 graph TD
-  A[Azure Subscription] --> B[Hub Resource Group \n rg-hub-networking]
-  B --> C[Hub VNet \n 10.1.0.0/16]
-  C --> D[Azure Firewall \n Standard]
-  C --> E[Management Subnet \n sn-hub-mgmt]
-  C --> F[Workloads Subnet \n sn-hub-workloads]
-  B --> G[Firewall Subnet \n AzureFirewallSubnet]
+  A[Azure Subscription] --> B[Hub Resource Group rg-hub-networking]
+  B --> C[Hub VNet 10.1.0.0/16]
+  C --> D[Azure Firewall Standard]
+  C --> E[Management Subnet sn-hub-mgmt]
+  C --> F[Workloads Subnet sn-hub-workloads]
+  B --> G[Firewall Subnet AzureFirewallSubnet]
 
-  A --> H[Spoke Resource Group \n rg-spoke-app]
-  H --> I[Spoke VNet \n 10.2.0.0/16]
-  I --> J[App Subnet \n sn-spoke-app-app]
-  I --> M[AKS Subnet \n sn-spoke-app-aks]
+  A --> H[Spoke Resource Group rg-spoke-app]
+  H --> I[Spoke VNet 10.2.0.0/16]
+  I --> J[App Subnet sn-spoke-app-app]
+  I --> M[AKS Subnet sn-spoke-app-aks]
 
-  A --> K[Shared Resource Group \n rg-shared-services]
-  K --> L[Key Vault \n kv-cert-store-615]
-  K --> O[Log Analytics Workspace \n law-sec-ops]
+  A --> K[Shared Resource Group rg-shared-services]
+  K --> L[Key Vault kv-cert-store-615]
+  K --> O[Log Analytics Workspace law-sec-ops]
 
   C <-->|VNet Peering| I
-  M --> N[AKS Cluster \n Private + Cilium + AAD RBAC + Defender + WI]
+  M --> N[AKS Cluster Private + Cilium + AAD RBAC + Defender + WI]
 ```
 
 ---
