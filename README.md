@@ -253,24 +253,87 @@ but only when **explicitly enabled via CI/CD toggles**.
 
 ```mermaid
 graph TD
-  A[Azure Subscription] --> B[Hub Resource Group rg-hub-networking]
-  B --> C[Hub VNet 10.1.0.0/16]
-  C --> D[Azure Firewall Standard]
-  C --> E[Management Subnet sn-hub-mgmt]
-  C --> F[Workloads Subnet sn-hub-workloads]
-  B --> G[Firewall Subnet AzureFirewallSubnet]
 
-  A --> H[Spoke Resource Group rg-spoke-app]
-  H --> I[Spoke VNet 10.2.0.0/16]
-  I --> J[App Subnet sn-spoke-app-app]
-  I --> M[AKS Subnet sn-spoke-app-aks]
+  %% ---------------------------
+  %% Subscription boundary
+  %% ---------------------------
+  subgraph SUB["Azure Subscription"]
+    direction TB
 
-  A --> K[Shared Resource Group rg-shared-services]
-  K --> L[Key Vault kv-cert-store-615]
-  K --> O[Log Analytics Workspace law-sec-ops]
+    %% ---------------------------
+    %% Edge Layer
+    %% ---------------------------
+    subgraph EDGE["Edge Layer"]
+      direction TB
+      P[Edge Resource Group\nrg-edge]
+      Q[Azure Front Door\nStandard/Premium]
+      P --> Q
+    end
 
-  C <-->|VNet Peering| I
-  M --> N[AKS Cluster Private + Cilium + AAD RBAC + Defender + WI]
+    %% ---------------------------
+    %% Hub Networking
+    %% ---------------------------
+    subgraph HUB["Hub Networking"]
+      direction TB
+      B[Hub Resource Group\nrg-hub-networking]
+      C[Hub VNet\n10.1.0.0/16]
+      D[Azure Firewall\nStandard]
+      E[Management Subnet\nsn-hub-mgmt]
+      F[Workloads Subnet\nsn-hub-workloads]
+      G[Firewall Subnet\nAzureFirewallSubnet]
+
+      B --> C
+      C --> D
+      C --> E
+      C --> F
+      B --> G
+    end
+
+    %% ---------------------------
+    %% Spoke Workloads
+    %% ---------------------------
+    subgraph SPOKE["Spoke Workloads"]
+      direction TB
+      H[Spoke Resource Group\nrg-spoke-app]
+      I[Spoke VNet\n10.2.0.0/16]
+      J[App Subnet\nsn-spoke-app-app]
+      M[AKS Subnet\nsn-spoke-app-aks]
+      N[AKS Cluster\nPrivate + Cilium + AAD RBAC + Defender + WI]
+
+      R[App Service\nOrigin Web App]
+
+      H --> I
+      I --> J
+      I --> M
+      M --> N
+
+      %% App Service as a workload in the spoke RG
+      H --> R
+    end
+
+    %% ---------------------------
+    %% Shared Services
+    %% ---------------------------
+    subgraph SHARED["Shared Services"]
+      direction TB
+      K[Shared Resource Group\nrg-shared-services]
+      L[Key Vault\nkv-cert-store-615]
+      O[Log Analytics Workspace\nlaw-sec-ops]
+
+      K --> L
+      K --> O
+    end
+
+    %% ---------------------------
+    %% Cross-links
+    %% ---------------------------
+    C <-->|VNet Peering| I
+
+    %% ---------------------------
+    %% Edge routing
+    %% ---------------------------
+    Q -->|HTTPS Origin| R
+  end
 ```
 
 ---
