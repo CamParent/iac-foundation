@@ -253,24 +253,24 @@ but only when **explicitly enabled via CI/CD toggles**.
 
 ```mermaid
 graph TD
-  A[Azure Subscription] --> B[Hub Resource Group \nrg-hub-networking]
-  B --> C[Hub VNet \n10.1.0.0/16]
-  C --> D[Azure Firewall \nStandard]
-  C --> E[Management Subnet \nsn-hub-mgmt]
-  C --> F[Workloads Subnet \nsn-hub-workloads]
-  B --> G[Firewall Subnet \nAzureFirewallSubnet]
+  A[Azure Subscription] --> B[Hub Resource Group \n rg-hub-networking]
+  B --> C[Hub VNet \n 10.1.0.0/16]
+  C --> D[Azure Firewall \n Standard]
+  C --> E[Management Subnet \n sn-hub-mgmt]
+  C --> F[Workloads Subnet \n sn-hub-workloads]
+  B --> G[Firewall Subnet \n AzureFirewallSubnet]
 
-  A --> H[Spoke Resource Group \nrg-spoke-app]
-  H --> I[Spoke VNet \n10.2.0.0/16]
-  I --> J[App Subnet \nsn-spoke-app-app]
-  I --> M[AKS Subnet \nsn-spoke-app-aks]
+  A --> H[Spoke Resource Group \n rg-spoke-app]
+  H --> I[Spoke VNet \n 10.2.0.0/16]
+  I --> J[App Subnet \n sn-spoke-app-app]
+  I --> M[AKS Subnet \n sn-spoke-app-aks]
 
-  A --> K[Shared Resource Group \nrg-shared-services]
-  K --> L[Key Vault \nkv-cert-store-615]
-  K --> O[Log Analytics Workspace \nlaw-sec-ops]
+  A --> K[Shared Resource Group \n rg-shared-services]
+  K --> L[Key Vault \n kv-cert-store-615]
+  K --> O[Log Analytics Workspace \n law-sec-ops]
 
   C <-->|VNet Peering| I
-  M --> N[AKS Cluster \nPrivate + Cilium + AAD RBAC + Defender + WI]
+  M --> N[AKS Cluster \n Private + Cilium + AAD RBAC + Defender + WI]
 ```
 
 ---
