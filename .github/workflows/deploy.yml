@@ -3,8 +3,6 @@ name: Deploy Azure Infrastructure (Bicep)
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
   workflow_dispatch:
     inputs:
       location:
@@ -57,6 +55,42 @@ on:
         required: true
         type: boolean
         default: false
+      deployWebApp:
+        description: Deploy App Service origin for Front Door learning
+        required: true
+        type: boolean
+        default: false
+      deployFrontDoor:
+        description: Deploy Azure Front Door
+        required: true
+        type: boolean
+        default: false
+      frontDoorSku:
+        description: Azure Front Door SKU
+        required: true
+        type: choice
+        options: [Standard_AzureFrontDoor, Premium_AzureFrontDoor]
+        default: Standard_AzureFrontDoor
+      webAppName:
+        description: Globally unique App Service name
+        required: false
+        default: camparentiacfweb01
+      appServicePlanName:
+        description: App Service plan name
+        required: false
+        default: asp-iacf-dev-web-01
+      edgeRgName:
+        description: Edge resource group name
+        required: false
+        default: rg-edge
+      frontDoorProfileName:
+        description: Front Door profile name
+        required: false
+        default: afd-iacf-dev-edge-01
+      frontDoorEndpointName:
+        description: Front Door endpoint name
+        required: false
+        default: ep-iacf-dev-edge-01
 
 permissions:
   id-token: write
@@ -72,10 +106,13 @@ env:
   DEPLOY_DEFENDER: ${{ inputs.deployDefender || false }}
   DEPLOY_SENTINEL_WORKBOOK: ${{ inputs.deploySentinelWorkbook || true }}
   DEPLOY_SENTINEL_ANALYTICS: ${{ inputs.deploySentinelAnalytics || false }}
+  DEPLOY_WEBAPP: ${{ inputs.deployWebApp || false }}
+  DEPLOY_FRONTDOOR: ${{ inputs.deployFrontDoor || false }}
+  FRONTDOOR_SKU: ${{ inputs.frontDoorSku || 'Standard_AzureFrontDoor' }}
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, proxmox]
 
     steps:
       - name: Checkout
@@ -135,6 +172,14 @@ jobs:
               deployDefender=${{ env.DEPLOY_DEFENDER }} \
               deploySentinelWorkbook=${{ env.DEPLOY_SENTINEL_WORKBOOK }} \
               deploySentinelAnalytics=${{ env.DEPLOY_SENTINEL_ANALYTICS }} \
+              edgeRgName=${{ inputs.edgeRgName || 'rg-edge' }} \
+              deployWebApp=${{ env.DEPLOY_WEBAPP }} \
+              deployFrontDoor=${{ env.DEPLOY_FRONTDOOR }} \
+              frontDoorSku=${{ env.FRONTDOOR_SKU }} \
+              webAppName=${{ inputs.webAppName || 'camparentiacfweb01' }} \
+              appServicePlanName=${{ inputs.appServicePlanName || 'asp-iacf-dev-web-01' }} \
+              frontDoorProfileName=${{ inputs.frontDoorProfileName || 'afd-iacf-dev-edge-01' }} \
+              frontDoorEndpointName=${{ inputs.frontDoorEndpointName || 'ep-iacf-dev-edge-01' }} \
               aksAdminGroupObjectIds='[]' \
               tags='{"environment":"dev","workload":"foundation","owner":"cam"}' \
             --name whatif-${{ github.run_number }} | tee what-if.txt
@@ -173,6 +218,14 @@ jobs:
               deployDefender=${{ env.DEPLOY_DEFENDER }} \
               deploySentinelWorkbook=${{ env.DEPLOY_SENTINEL_WORKBOOK }} \
               deploySentinelAnalytics=${{ env.DEPLOY_SENTINEL_ANALYTICS }} \
+              edgeRgName=${{ inputs.edgeRgName || 'rg-edge' }} \
+              deployWebApp=${{ env.DEPLOY_WEBAPP }} \
+              deployFrontDoor=${{ env.DEPLOY_FRONTDOOR }} \
+              frontDoorSku=${{ env.FRONTDOOR_SKU }} \
+              webAppName=${{ inputs.webAppName || 'camparentiacfweb01' }} \
+              appServicePlanName=${{ inputs.appServicePlanName || 'asp-iacf-dev-web-01' }} \
+              frontDoorProfileName=${{ inputs.frontDoorProfileName || 'afd-iacf-dev-edge-01' }} \
+              frontDoorEndpointName=${{ inputs.frontDoorEndpointName || 'ep-iacf-dev-edge-01' }} \
               aksAdminGroupObjectIds='[]' \
               tags='{"environment":"dev","workload":"foundation","owner":"cam"}' \
             --name deploy-${{ github.run_number }}
