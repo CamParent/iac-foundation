@@ -137,7 +137,7 @@ resource rgShared 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   tags: tags
 }
 
-resource rgEdge 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+resource rgEdge 'Microsoft.Resources/resourceGroups@2024-03-01' = if (deployFrontDoor) {
   name: edgeRgName
   location: location
   tags: tags
