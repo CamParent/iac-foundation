@@ -82,6 +82,34 @@ param deployAcr bool = false
 @description('Name of the Azure Container Registry')
 param acrName string = 'iacfoundationacr'
 
+@description('Edge resource group name.')
+param edgeRgName string = 'rg-edge'
+
+@description('Deploy App Service origin for Front Door learning.')
+param deployWebApp bool = false
+
+@description('Deploy Azure Front Door.')
+param deployFrontDoor bool = false
+
+@allowed([
+  'Standard_AzureFrontDoor'
+  'Premium_AzureFrontDoor'
+])
+@description('Azure Front Door SKU.')
+param frontDoorSku string = 'Standard_AzureFrontDoor'
+
+@description('Globally unique App Service name.')
+param webAppName string = 'iacfdevwebapp01'
+
+@description('App Service plan name.')
+param appServicePlanName string = 'asp-iacf-dev-web-01'
+
+@description('Front Door profile name.')
+param frontDoorProfileName string = 'afd-iacf-dev-edge-01'
+
+@description('Front Door endpoint name.')
+param frontDoorEndpointName string = 'ep-iacf-dev-edge-01'
+
 @description('Deploy Microsoft Sentinel analytics rules (Detection-as-Code) to the law-sec-ops workspace.')
 param deploySentinelAnalytics bool = false
 
@@ -105,6 +133,12 @@ resource rgSpoke 'Microsoft.Resources/resourceGroups@2024-03-01' = {
 
 resource rgShared 'Microsoft.Resources/resourceGroups@2024-03-01' = {
   name: sharedRgName
+  location: location
+  tags: tags
+}
+
+resource rgEdge 'Microsoft.Resources/resourceGroups@2024-03-01' = {
+  name: edgeRgName
   location: location
   tags: tags
 }
@@ -200,7 +234,39 @@ module spoke './modules/spoke-networking.bicep' = {
 }
 
 // =====================================================
-// 7) HUB ↔ SPOKE PEERING (call RG-scoped module twice)
+// 7) APP SERVICE ORIGIN (optional)
+//    Deploys a simple App Service origin for Front Door learning
+// =====================================================
+module webApp './modules/appservice.bicep' = if (deployWebApp) {
+  name: 'mod-appservice'
+  scope: rgSpoke
+  params: {
+    location: location
+    webAppName: webAppName
+    appServicePlanName: appServicePlanName
+    skuName: 'B1'
+    tags: tags
+  }
+}
+
+// =====================================================
+// 8) FRONT DOOR (optional)
+//    Deploys Azure Front Door with App Service as origin
+// =====================================================
+module frontDoor './modules/frontdoor.bicep' = if (deployFrontDoor && deployWebApp) {
+  name: 'mod-frontdoor'
+  scope: rgEdge
+  params: {
+    profileName: frontDoorProfileName
+    endpointName: frontDoorEndpointName
+    originHostName: webApp.outputs.defaultHostname
+    skuName: frontDoorSku
+    tags: tags
+  }
+}
+
+// =====================================================
+// 9) HUB ↔ SPOKE PEERING (call RG-scoped module twice)
 // =====================================================
 
 // Hub ➜ Spoke
@@ -232,7 +298,7 @@ module spokeToHub './modules/peering.bicep' = {
 }
 
 // =====================================================
-// 8) AKS CLUSTER (optional)
+// 10) AKS CLUSTER (optional)
 //    Deploys a private AKS cluster into the spoke VNet
 // =====================================================
 module aks './modules/aks.bicep' = if (deployAks) {
@@ -249,7 +315,7 @@ module aks './modules/aks.bicep' = if (deployAks) {
 }
 
 // =====================================================
-// 9) ACR Module
+// 11) ACR Module
 // =====================================================
 module acr './modules/acr.bicep' = if (deployAcr) {
   name: 'mod-acr'
@@ -264,7 +330,7 @@ module acr './modules/acr.bicep' = if (deployAcr) {
 }
 
 // =====================================================
-// 10) Policy
+// 12) Policy
 // =====================================================
 module policies './modules/policy.bicep' = if (deployPolicies) {
   name: 'mod-policies'
@@ -275,7 +341,7 @@ module policies './modules/policy.bicep' = if (deployPolicies) {
 }
 
 // =====================================================
-// 11) SENTINEL ANALYTICS (Detection-as-Code)
+// 13) SENTINEL ANALYTICS (Detection-as-Code)
 //     Deploys Scheduled Analytics Rules against law-sec-ops
 // =====================================================
 module sentinelAnalytics './sentinel/analytics.bicep' = if (deploySentinelAnalytics) {
@@ -287,7 +353,7 @@ module sentinelAnalytics './sentinel/analytics.bicep' = if (deploySentinelAnalyt
 }
 
 // =====================================================
-// 12) SENTINEL WORKBOOK: SOC Detection Summary
+// 14) SENTINEL WORKBOOK: SOC Detection Summary
 // =====================================================
 module sentinelWorkbook './sentinel/workbook.bicep' = if (deploySentinelWorkbook) {
   name: 'mod-soc-workbook'
@@ -310,3 +376,5 @@ output aksName string              = deployAks ? aks.outputs.aksNameOut : ''
 output aksFqdn string              = deployAks ? aks.outputs.aksFqdn : ''
 output acrLoginServer string       = deployAcr ? acr.outputs.acrLoginServer : ''
 output acrResourceId string        = deployAcr ? acr.outputs.acrResourceId : ''
+output webAppHostname string       = deployWebApp ? webApp.outputs.defaultHostname : ''
+output frontDoorHostname string    = (deployFrontDoor && deployWebApp) ? frontDoor.outputs.frontDoorEndpointHostName : ''
