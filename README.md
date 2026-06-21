@@ -4,12 +4,14 @@
 [![AKS Deploy](https://github.com/CamParent/iac-foundation/actions/workflows/aks-deploy.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/aks-deploy.yml)
 [![Sentinel Rules](https://github.com/CamParent/iac-foundation/actions/workflows/sentinel-rule-deploy.yaml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/sentinel-rule-deploy.yaml)
 [![Terraform Plan (Azure)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan.yml)
+[![Terraform Plan (Azure App Gateway + WAF + Private Endpoints)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan-azure.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan-azure.yml)
 [![Terraform Plan (AWS Hub–Spoke SSM Lab)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-aws-hub-spoke.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-aws-hub-spoke.yml)
 
 This repository defines a **modular, production-lean cloud landing zone** with:
 
 - **Azure** hub–spoke networking, AKS, Policy, and Microsoft Sentinel — built in **Bicep**
 - A **parallel Terraform implementation** for Azure networking/AKS
+- **Azure Terraform modules** for App Gateway (WAF_v2), Private Endpoints, and Private DNS Zones
 - A separate **AWS hub–spoke + Transit Gateway + SSM lab** in Terraform
 - **GitHub Actions CI/CD** using **OIDC** for both Azure and AWS (no stored cloud keys)
 - Built-in **cost governance** via feature toggles and plan-only pipelines
@@ -121,6 +123,74 @@ The Azure Terraform variant demonstrates:
  - **OIDC-based, secretless CI/CD**
 
 This mirrors how real platform teams often support **both native and third-party IaC tooling side-by-side.**
+
+---
+
+## Terraform Variant (Azure App Gateway + WAF + Private Endpoints)
+
+[![Terraform Plan (Azure Hub–Spoke + App Gateway + Private Endpoints)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan-azure.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan-azure.yml)
+
+A dedicated Terraform module suite for enterprise-grade Azure application delivery and private connectivity lives under [`/terraform/azure`](./terraform/azure).
+
+This extends the hub–spoke foundation with the security and networking primitives commonly required in PCI-DSS and enterprise environments — specifically **Application Gateway with WAF**, **Private Endpoints**, and **Private DNS Zone integration**.
+
+### 📁 Azure Terraform Module Structure
+
+```text
+terraform/azure/
+  envs/
+    lab/
+      main.tf          # Wires all modules together + remote backend config
+      variables.tf     # Environment-level inputs
+      outputs.tf       # Exposes key resource IDs and IPs
+  modules/
+    networking/        # Hub + spoke VNets, subnets, bidirectional VNet peering
+    appgateway/        # Application Gateway with WAF_v2, OWASP 3.2, routing rules
+    private-endpoint/  # Private Endpoint + Private DNS Zone + VNet link
+```
+
+### 🏗️ What Gets Deployed
+
+When deployed, the lab environment creates:
+
+- `rg-hub-networking-lab` — Hub resource group
+  - `vnet-hub-lab` (`10.0.0.0/16`) with `GatewaySubnet` and `snet-appgw`
+  - `appgw-cam-lab` — Application Gateway (WAF_v2, OWASP 3.2, Detection mode)
+  - `pip-appgw-cam-lab` — Static public IP for App Gateway frontend
+- `rg-spoke-apps-lab` — Spoke resource group
+  - `vnet-spoke-lab` (`10.1.0.0/16`) with `snet-workload`
+  - `pe-sql-cam-lab` — Private Endpoint for Azure SQL
+  - `privatelink.database.windows.net` — Private DNS Zone
+  - DNS Zone VNet link for private resolution
+- Bidirectional hub ↔ spoke VNet peering
+
+### 🔐 Key Security Patterns Demonstrated
+
+- **WAF_v2 with OWASP 3.2** — App Gateway sits in a dedicated subnet, inspecting inbound traffic before it reaches backend workloads
+- **Private Endpoint** — Azure SQL is accessible only via a private IP inside the spoke VNet; public endpoint disabled
+- **Private DNS Zone** — Ensures `*.database.windows.net` resolves to the private IP, not the public endpoint
+- **Remote state** — Terraform state stored in Azure Blob Storage with lease-based locking
+- **No hardcoded secrets** — Sensitive values referenced via Azure Key Vault data sources or environment variables
+
+### 🚦 WAF Mode Toggle
+
+The App Gateway WAF mode is configurable at deploy time:
+
+| Mode | Behavior |
+|---|---|
+| `Detection` | Logs malicious requests, does not block (default — safe for lab) |
+| `Prevention` | Actively blocks requests matching OWASP rules (production posture) |
+
+### 🔁 CI/CD (OIDC-Based, Plan-Only)
+
+The workflow `.github/workflows/terraform-plan-azure.yml` runs on every push to `terraform/azure/**` and supports manual dispatch with WAF mode selection:
+
+- `terraform init` — initializes remote backend
+- `terraform fmt -check -recursive` — enforces formatting standards
+- `terraform validate` — syntax and consistency check
+- `terraform plan` — previews all 14 resources with no apply
+
+Authentication uses **Azure OIDC federated identity** — no client secrets stored in GitHub.
 
 ---
 
