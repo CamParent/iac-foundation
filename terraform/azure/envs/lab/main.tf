@@ -21,11 +21,11 @@ provider "azurerm" {
 module "networking" {
   source = "../../modules/networking"
 
-  location            = var.location
-  environment         = var.environment
-  prefix              = var.prefix
-  hub_address_space   = ["10.0.0.0/16"]
-  spoke_address_space = ["10.1.0.0/16"]
+  location              = var.location
+  environment           = var.environment
+  prefix                = var.prefix
+  hub_address_space     = ["10.0.0.0/16"]
+  spoke_address_space   = ["10.1.0.0/16"]
   gateway_subnet_prefix = "10.0.0.0/27"
   appgw_subnet_prefix   = "10.0.1.0/24"
   spoke_subnet_prefix   = "10.1.0.0/24"
