@@ -1,0 +1,72 @@
+name: Terraform Plan (Azure Hub–Spoke + App Gateway + Private Endpoints)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/azure/**'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'terraform/azure/**'
+  workflow_dispatch:
+    inputs:
+      waf_mode:
+        type: choice
+        default: Detection
+        description: "WAF mode for App Gateway"
+        options:
+          - Detection
+          - Prevention
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  ARM_USE_OIDC: true
+  ARM_CLIENT_ID:       ${{ secrets.AZURE_CLIENT_ID }}
+  ARM_TENANT_ID:       ${{ secrets.AZURE_TENANT_ID }}
+  ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Azure login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id:       ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id:       ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        working-directory: terraform/azure/envs/lab
+        run: terraform init -input=false
+
+      - name: Terraform Format Check
+        working-directory: terraform/azure/envs/lab
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: terraform/azure/envs/lab
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: terraform/azure/envs/lab
+        run: |
+          terraform plan -input=false \
+            -var "environment=lab" \
+            -var "location=eastus2" \
+            -var "prefix=cam"
