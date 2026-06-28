@@ -15,3 +15,9 @@ variable "prefix" {
   type        = string
   default     = "cam"
 }
+
+variable "tenant_domain" {
+  description = "Azure AD tenant domain e.g. contoso.onmicrosoft.com"
+  type        = string
+  default     = "yourtenant.onmicrosoft.com"
+}

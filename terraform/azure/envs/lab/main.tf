@@ -60,3 +60,60 @@ module "private_endpoint" {
 
   depends_on = [module.networking]
 }
+
+module "identity" {
+  source = "../../modules/identity"
+
+  environment = var.environment
+  prefix      = var.prefix
+
+  users = {
+    "cam" = {
+      display_name        = "Cam Parent"
+      user_principal_name = "cam.parent@${var.tenant_domain}"
+      mail_nickname       = "cam.parent"
+    }
+    "svc_terraform" = {
+      display_name        = "Service Account - Terraform"
+      user_principal_name = "svc.terraform@${var.tenant_domain}"
+      mail_nickname       = "svc.terraform"
+    }
+  }
+
+  groups = {
+    "engineers" = {
+      display_name       = "grp-cloud-engineers-${var.environment}"
+      description        = "Cloud engineering team"
+      assignable_to_role = true
+    }
+    "readers" = {
+      display_name       = "grp-cloud-readers-${var.environment}"
+      description        = "Read-only access group"
+      assignable_to_role = false
+    }
+  }
+
+  app_registrations = {
+    "github_oidc" = {
+      display_name     = "app-github-oidc-${var.environment}"
+      sign_in_audience = "AzureADMyOrg"
+    }
+    "monitoring" = {
+      display_name     = "app-monitoring-${var.environment}"
+      sign_in_audience = "AzureADMyOrg"
+    }
+  }
+
+  conditional_access_policies = {
+    "require_mfa" = {
+      display_name       = "cap-require-mfa-${var.environment}"
+      state              = "enabledForReportingButNotEnforced"
+      included_users     = ["All"]
+      excluded_users     = []
+      included_platforms = ["all"]
+      grant_controls     = ["mfa"]
+    }
+  }
+
+  role_assignments = []
+}

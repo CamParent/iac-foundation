@@ -37,3 +37,28 @@ output "private_ip_address" {
   description = "Private IP address of the private endpoint"
   value       = module.private_endpoint.private_ip_address
 }
+
+output "user_object_ids" {
+  description = "Object IDs of created Azure AD users"
+  value       = module.identity.user_object_ids
+}
+
+output "group_object_ids" {
+  description = "Object IDs of created Azure AD groups"
+  value       = module.identity.group_object_ids
+}
+
+output "app_registration_client_ids" {
+  description = "Client IDs of created app registrations"
+  value       = module.identity.app_registration_client_ids
+}
+
+output "service_principal_object_ids" {
+  description = "Object IDs of created service principals"
+  value       = module.identity.service_principal_object_ids
+}
+
+output "conditional_access_policy_ids" {
+  description = "IDs of created Conditional Access policies"
+  value       = module.identity.conditional_access_policy_ids
+}
