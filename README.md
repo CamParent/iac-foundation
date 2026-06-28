@@ -11,7 +11,7 @@ This repository defines a **modular, production-lean cloud landing zone** with:
 
 - **Azure** hub–spoke networking, AKS, Policy, and Microsoft Sentinel — built in **Bicep**
 - A **parallel Terraform implementation** for Azure networking/AKS
-- **Azure Terraform modules** for App Gateway (WAF_v2), Private Endpoints, and Private DNS Zones
+- **Azure Terraform modules** for App Gateway (WAF_v2), Private Endpoints, Private DNS Zones, and Identity as Code
 - A separate **AWS hub–spoke + Transit Gateway + SSM lab** in Terraform
 - **GitHub Actions CI/CD** using **OIDC** for both Azure and AWS (no stored cloud keys)
 - Built-in **cost governance** via feature toggles and plan-only pipelines
@@ -126,13 +126,13 @@ This mirrors how real platform teams often support **both native and third-party
 
 ---
 
-## Terraform Variant (Azure App Gateway + WAF + Private Endpoints)
+## Terraform Variant (Azure App Gateway + WAF + Private Endpoints + Identity as Code)
 
-[![Terraform Plan (Azure Hub–Spoke + App Gateway + Private Endpoints)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan-azure.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan-azure.yml)
+[![Terraform Plan (Azure App Gateway + WAF + Private Endpoints)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan-azure.yml/badge.svg)](https://github.com/CamParent/iac-foundation/actions/workflows/terraform-plan-azure.yml)
 
-A dedicated Terraform module suite for enterprise-grade Azure application delivery and private connectivity lives under [`/terraform/azure`](./terraform/azure).
+A dedicated Terraform module suite for enterprise-grade Azure application delivery, private connectivity, and identity management lives under [`/terraform/azure`](./terraform/azure).
 
-This extends the hub–spoke foundation with the security and networking primitives commonly required in PCI-DSS and enterprise environments — specifically **Application Gateway with WAF**, **Private Endpoints**, and **Private DNS Zone integration**.
+This extends the hub–spoke foundation with the security and networking primitives commonly required in PCI-DSS and enterprise environments — specifically **Application Gateway with WAF**, **Private Endpoints**, **Private DNS Zone integration**, and **Identity as Code**.
 
 ### 📁 Azure Terraform Module Structure
 
@@ -147,6 +147,7 @@ terraform/azure/
     networking/        # Hub + spoke VNets, subnets, bidirectional VNet peering
     appgateway/        # Application Gateway with WAF_v2, OWASP 3.2, routing rules
     private-endpoint/  # Private Endpoint + Private DNS Zone + VNet link
+    identity/          # Azure AD users, groups, app registrations, service principals, Conditional Access
 ```
 
 ### 🏗️ What Gets Deployed
@@ -163,6 +164,7 @@ When deployed, the lab environment creates:
   - `privatelink.database.windows.net` — Private DNS Zone
   - DNS Zone VNet link for private resolution
 - Bidirectional hub ↔ spoke VNet peering
+- Azure AD users, groups, app registrations, service principals, and Conditional Access policies
 
 ### 🔐 Key Security Patterns Demonstrated
 
@@ -171,6 +173,28 @@ When deployed, the lab environment creates:
 - **Private DNS Zone** — Ensures `*.database.windows.net` resolves to the private IP, not the public endpoint
 - **Remote state** — Terraform state stored in Azure Blob Storage with lease-based locking
 - **No hardcoded secrets** — Sensitive values referenced via Azure Key Vault data sources or environment variables
+- **Managed Identity** — Resources authenticate to each other without credentials via RBAC role assignments
+- **Conditional Access** — MFA enforcement policy deployed as code via `azuread_conditional_access_policy`
+
+### 🪪 Identity as Code (Azure AD / Entra ID)
+
+The `identity` module manages Azure AD resources declaratively via Terraform:
+
+| Resource | Description |
+|---|---|
+| `azuread_user` | Creates AD users with force password change on first login |
+| `azuread_group` | Security groups with role-assignable flag support |
+| `azuread_group_member` | Assigns users to groups dynamically |
+| `azuread_application` | App registrations for workload identities |
+| `azuread_service_principal` | Service principals tied to each app registration |
+| `azuread_conditional_access_policy` | MFA and access control policies as code |
+
+Example resources created in lab:
+- `grp-cloud-engineers-lab` — Role-assignable security group
+- `grp-cloud-readers-lab` — Read-only access group
+- `app-github-oidc-lab` — App registration for GitHub Actions OIDC
+- `app-monitoring-lab` — App registration for monitoring workloads
+- `cap-require-mfa-lab` — Conditional Access policy requiring MFA (report-only mode)
 
 ### 🚦 WAF Mode Toggle
 
@@ -188,7 +212,7 @@ The workflow `.github/workflows/terraform-plan-azure.yml` runs on every push to 
 - `terraform init` — initializes remote backend
 - `terraform fmt -check -recursive` — enforces formatting standards
 - `terraform validate` — syntax and consistency check
-- `terraform plan` — previews all 14 resources with no apply
+- `terraform plan` — previews all 25 resources with no apply
 
 Authentication uses **Azure OIDC federated identity** — no client secrets stored in GitHub.
 
